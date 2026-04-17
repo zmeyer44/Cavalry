@@ -290,25 +290,43 @@ export function GatewayFlowMockup() {
 
   return (
     <MockupChrome title="flow · gateway.proxy" subtitle="policy · cache · audit">
-      <div className="grid grid-cols-5 items-stretch gap-0 p-5 text-[12.5px]">
+      <div className="grid grid-cols-1 items-stretch gap-5 p-4 text-[12.5px] sm:p-5 md:grid-cols-5 md:gap-0">
         {/* clients */}
-        <div className="col-span-1 space-y-2">
+        <div className="md:col-span-1">
           <div className="cav-label text-neutral-500">clients</div>
-          {clients.map((c) => (
-            <div
-              key={c.name}
-              className="flex items-center gap-2 rounded-md border border-neutral-800 bg-neutral-900 px-2 py-1.5"
-            >
-              <span className="flex size-5 items-center justify-center rounded bg-neutral-800 font-mono text-[10px]">
-                {c.abbr}
-              </span>
-              <span className="truncate text-[12px]">{c.name}</span>
-            </div>
-          ))}
+          <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-1">
+            {clients.map((c) => (
+              <div
+                key={c.name}
+                className="flex items-center gap-2 rounded-md border border-neutral-800 bg-neutral-900 px-2 py-1.5"
+              >
+                <span className="flex size-5 shrink-0 items-center justify-center rounded bg-neutral-800 font-mono text-[10px]">
+                  {c.abbr}
+                </span>
+                <span className="truncate text-[12px]">{c.name}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* arrows */}
-        <div className="col-span-1 flex flex-col items-center justify-center gap-1 text-neutral-600">
+        {/* mobile arrow · clients → gateway */}
+        <div className="flex justify-center text-neutral-600 md:hidden">
+          <svg viewBox="0 0 14 36" className="h-9 w-[14px]">
+            <line
+              x1={7}
+              y1={0}
+              x2={7}
+              y2={28}
+              strokeDasharray="3 3"
+              stroke="currentColor"
+              strokeWidth={1.5}
+            />
+            <path d="M3 28 L7 36 L11 28 Z" fill="currentColor" />
+          </svg>
+        </div>
+
+        {/* desktop arrows · clients → gateway */}
+        <div className="hidden flex-col items-center justify-center gap-1 text-neutral-600 md:col-span-1 md:flex">
           {clients.map((_, i) => (
             <svg key={i} viewBox="0 0 60 14" className="h-[14px] w-full">
               <line
@@ -326,29 +344,29 @@ export function GatewayFlowMockup() {
         </div>
 
         {/* gateway */}
-        <div className="col-span-1 flex flex-col justify-center">
+        <div className="flex flex-col justify-center md:col-span-1">
           <div className="rounded-xl border border-[oklch(0.66_0.21_265)] bg-[oklch(0.66_0.21_265)]/10 p-4 text-center shadow-[0_0_40px_oklch(0.66_0.21_265_/_0.25)]">
             <div className="cav-label text-[oklch(0.66_0.21_265)]">Cavalry</div>
             <div className="mt-1 text-[15px] font-medium">Gateway</div>
-            <ul className="mt-3 space-y-1 text-left text-[11px] text-neutral-400">
+            <ul className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-left text-[11px] text-neutral-400 md:grid-cols-1 md:gap-1">
               <li className="flex items-center gap-1.5">
-                <Check className="size-3 text-[oklch(0.73_0.14_152)]" /> authn · tokens
+                <Check className="size-3 shrink-0 text-[oklch(0.73_0.14_152)]" /> authn · tokens
               </li>
               <li className="flex items-center gap-1.5">
-                <Check className="size-3 text-[oklch(0.73_0.14_152)]" /> policy eval
+                <Check className="size-3 shrink-0 text-[oklch(0.73_0.14_152)]" /> policy eval
               </li>
               <li className="flex items-center gap-1.5">
-                <Check className="size-3 text-[oklch(0.73_0.14_152)]" /> cache
+                <Check className="size-3 shrink-0 text-[oklch(0.73_0.14_152)]" /> cache
               </li>
               <li className="flex items-center gap-1.5">
-                <Check className="size-3 text-[oklch(0.73_0.14_152)]" /> audit emit
+                <Check className="size-3 shrink-0 text-[oklch(0.73_0.14_152)]" /> audit emit
               </li>
             </ul>
           </div>
         </div>
 
-        {/* arrows right */}
-        <div className="col-span-1 flex flex-col items-center justify-center gap-1 text-neutral-600">
+        {/* desktop arrows · gateway → sources */}
+        <div className="hidden flex-col items-center justify-center gap-1 text-neutral-600 md:col-span-1 md:flex">
           {sources.map((_, i) => (
             <svg key={i} viewBox="0 0 60 14" className="h-[14px] w-full">
               <line
@@ -365,18 +383,39 @@ export function GatewayFlowMockup() {
           ))}
         </div>
 
+        {/* mobile arrow · gateway → sources */}
+        <div className="flex justify-center text-neutral-600 md:hidden">
+          <svg viewBox="0 0 14 36" className="h-9 w-[14px]">
+            <line
+              x1={7}
+              y1={0}
+              x2={7}
+              y2={28}
+              strokeDasharray="3 3"
+              stroke="currentColor"
+              strokeWidth={1.5}
+            />
+            <path d="M3 28 L7 36 L11 28 Z" fill="currentColor" />
+          </svg>
+        </div>
+
         {/* sources */}
-        <div className="col-span-1 space-y-2">
-          <div className="cav-label text-right text-neutral-500">registries</div>
-          {sources.map((s) => (
-            <div
-              key={s.name}
-              className={cn('flex items-center gap-2 rounded-md px-2 py-1.5 text-[12px]', s.tone)}
-            >
-              <span className="size-1.5 rounded-full bg-[oklch(0.66_0.21_265)]" />
-              {s.name}
-            </div>
-          ))}
+        <div className="md:col-span-1">
+          <div className="cav-label text-neutral-500 md:text-right">registries</div>
+          <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-1">
+            {sources.map((s) => (
+              <div
+                key={s.name}
+                className={cn(
+                  'flex items-center gap-2 rounded-md px-2 py-1.5 text-[12px]',
+                  s.tone,
+                )}
+              >
+                <span className="size-1.5 shrink-0 rounded-full bg-[oklch(0.66_0.21_265)]" />
+                <span className="truncate">{s.name}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </MockupChrome>
