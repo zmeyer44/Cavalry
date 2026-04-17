@@ -1,0 +1,32 @@
+{
+  "name": "@cavalry/gateway",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc --noEmit",
+    "start": "tsx src/server.ts",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@cavalry/audit": "workspace:*",
+    "@cavalry/common": "workspace:*",
+    "@cavalry/database": "workspace:*",
+    "@cavalry/skill-format": "workspace:*",
+    "@cavalry/storage": "workspace:*",
+    "@hono/node-server": "^1.13.7",
+    "dotenv": "^16.4.7",
+    "drizzle-orm": "^0.45.2",
+    "hono": "^4.6.14",
+    "pino": "^9.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.8"
+  }
+}

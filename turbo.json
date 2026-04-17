@@ -1,0 +1,66 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": [".env", "**/.env.*local"],
+  "globalPassThroughEnv": [
+    "CAVALRY_ENV",
+    "CAVALRY_LOG_LEVEL",
+    "CAVALRY_WEB_URL",
+    "CAVALRY_GATEWAY_URL",
+    "CAVALRY_GATEWAY_PORT",
+    "CAVALRY_GATEWAY_CACHE_TTL",
+    "CAVALRY_GATEWAY_MAX_ARTIFACT_SIZE",
+    "CAVALRY_STORAGE_PROVIDER",
+    "CAVALRY_STORAGE_LOCAL_DIR",
+    "CAVALRY_STORAGE_S3_BUCKET",
+    "CAVALRY_STORAGE_S3_REGION",
+    "CAVALRY_STORAGE_S3_ENDPOINT",
+    "CAVALRY_OIDC_ISSUER",
+    "CAVALRY_OIDC_CLIENT_ID",
+    "CAVALRY_OIDC_CLIENT_SECRET",
+    "CAVALRY_UPSTREAM_TESSL_URL",
+    "CAVALRY_UPSTREAM_GITHUB_TOKEN",
+    "CAVALRY_TELEMETRY_ENABLED",
+    "DATABASE_URL",
+    "BETTER_AUTH_SECRET",
+    "BETTER_AUTH_URL",
+    "AWS_ACCESS_KEY_ID",
+    "AWS_SECRET_ACCESS_KEY",
+    "NODE_ENV"
+  ],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "lint": {
+      "dependsOn": ["^build"]
+    },
+    "typecheck": {
+      "dependsOn": ["^build"]
+    },
+    "test": {
+      "dependsOn": ["^build"]
+    },
+    "e2e": {
+      "dependsOn": ["^build"],
+      "cache": false
+    },
+    "db:generate": {
+      "cache": false
+    },
+    "db:migrate": {
+      "cache": false
+    },
+    "db:seed": {
+      "cache": false
+    },
+    "db:studio": {
+      "cache": false,
+      "persistent": true
+    }
+  }
+}
