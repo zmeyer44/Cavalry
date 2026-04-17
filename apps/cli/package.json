@@ -1,0 +1,31 @@
+{
+  "name": "@cavalry/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "cavalry": "./src/index.ts"
+  },
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc --noEmit",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@cavalry/common": "workspace:*",
+    "@cavalry/skill-format": "workspace:*",
+    "commander": "^12.1.0",
+    "picocolors": "^1.1.1",
+    "tar": "^7.4.3",
+    "tsx": "^4.19.2",
+    "undici": "^7.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "@types/tar": "^6.1.13",
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.8"
+  }
+}

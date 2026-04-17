@@ -1,0 +1,36 @@
+{
+  "name": "cavalry",
+  "private": true,
+  "description": "Governance, observability, and control for AI agent context at enterprise scale.",
+  "workspaces": [
+    "apps/*",
+    "services/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "e2e": "pnpm --filter @cavalry/web-e2e e2e",
+    "e2e:install": "pnpm --filter @cavalry/web-e2e e2e:install",
+    "db:generate": "turbo db:generate --filter=@cavalry/database",
+    "db:migrate": "turbo db:migrate --filter=@cavalry/database",
+    "db:seed": "turbo db:seed --filter=@cavalry/database",
+    "db:studio": "turbo db:studio --filter=@cavalry/database",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\""
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "lefthook": "^1.10.1",
+    "playwright": "^1.59.1",
+    "prettier": "^3.4.2",
+    "turbo": "^2.3.3",
+    "typescript": "^5.9.3"
+  },
+  "packageManager": "pnpm@10.0.0",
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,43 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# build outputs
+dist/
+.next/
+.turbo/
+out/
+
+# environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# testing
+coverage/
+test-results/
+e2e/test-results/
+e2e/report/
+e2e/screenshots/
+e2e/.auth/
+apps/web-e2e/test-results/
+apps/web-e2e/playwright-report/
+apps/web-e2e/.cavalry-e2e-storage/
+
+# local storage (artifacts + caches)
+.cavalry-storage/
+.cavalry-e2e-storage/
+
+# claude code
+.claude/worktrees/
+
+# misc
+*.log
+*.tsbuildinfo
