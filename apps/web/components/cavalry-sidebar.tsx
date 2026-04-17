@@ -32,17 +32,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import { Avatar } from '@/components/ui/avatar';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -85,9 +76,7 @@ function NavItem({
     <Link href={href} className={classes}>
       <Icon className="size-[15px] shrink-0" />
       {!collapsed && <span className="truncate">{label}</span>}
-      {isActive && !collapsed && (
-        <span className="ml-auto h-4 w-px bg-primary" />
-      )}
+      {isActive && !collapsed && <span className="ml-auto h-4 w-[2px] bg-primary" />}
     </Link>
   );
   if (collapsed) {
@@ -114,12 +103,7 @@ function NavSection({
 }) {
   return (
     <div className="flex w-full flex-col gap-0.5">
-      <div
-        className={cn(
-          'overflow-hidden transition-all duration-300',
-          collapsed ? 'h-0' : 'h-5',
-        )}
-      >
+      <div className={cn('overflow-hidden transition-all duration-300', collapsed ? 'h-0' : 'h-5')}>
         <div className="cav-label flex h-5 items-center px-2">{label}</div>
       </div>
       {children}
@@ -155,7 +139,12 @@ export function CavalrySidebar({
     { href: `${prefix}/policies`, label: 'Policies', icon: ShieldCheck, key: 'policies' },
   ];
   const settings: NavEntry[] = [
-    { href: `${prefix}/settings/workspaces`, label: 'Workspaces', icon: Building2, key: 'workspaces' },
+    {
+      href: `${prefix}/settings/workspaces`,
+      label: 'Workspaces',
+      icon: Building2,
+      key: 'workspaces',
+    },
     { href: `${prefix}/settings/members`, label: 'Members', icon: Users, key: 'members' },
   ];
   if (isAdmin) {
@@ -201,10 +190,7 @@ export function CavalrySidebar({
         <div className="flex flex-1 flex-col gap-3 overflow-hidden">
           {/* Brand + org switcher */}
           <div
-            className={cn(
-              'flex h-10 items-center gap-2',
-              collapsed ? 'justify-center' : 'px-1',
-            )}
+            className={cn('flex h-10 items-center gap-2', collapsed ? 'justify-center' : 'px-1')}
           >
             {!collapsed ? (
               <DropdownMenu>
@@ -306,9 +292,7 @@ function UserMenu({ user, collapsed }: { user: SidebarUser; collapsed: boolean }
       <Avatar name={displayName} className="size-7 shrink-0" />
       {!collapsed && (
         <>
-          <span className="flex-1 truncate text-left text-[13px] font-medium">
-            {displayName}
-          </span>
+          <span className="flex-1 truncate text-left text-[13px] font-medium">{displayName}</span>
           <Ellipsis className="size-4 shrink-0 text-muted-foreground" />
         </>
       )}
