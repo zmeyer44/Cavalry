@@ -44,16 +44,14 @@ export function Stats() {
                 aria-hidden
                 className="pointer-events-none absolute -right-6 -top-10 size-40 rounded-full bg-primary/[0.05] blur-3xl opacity-0 transition-opacity duration-500 group-hover:opacity-100"
               />
-              <div className="relative tabular flex items-start text-[84px] font-semibold leading-[0.9] tracking-[-0.055em] text-stone-950 md:text-[104px]">
+              <div className="relative tabular flex items-start text-[84px] font-semibold font-display leading-[0.9] tracking-[-0.055em] text-stone-950 md:text-[104px]">
                 <span>{s.value}</span>
                 {s.suffix ? <span className="text-primary">{s.suffix}</span> : null}
               </div>
               <h3 className="relative mt-8 font-display text-[17px] font-semibold tracking-[-0.01em] text-stone-950">
                 {s.heading}
               </h3>
-              <p className="relative mt-2 text-[14.5px] leading-relaxed text-stone-600">
-                {s.desc}
-              </p>
+              <p className="relative mt-2 text-[14.5px] leading-relaxed text-stone-600">{s.desc}</p>
             </div>
           ))}
         </div>
