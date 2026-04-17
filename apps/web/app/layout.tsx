@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
-import { Instrument_Serif } from 'next/font/google';
+import { Instrument_Serif, Space_Grotesk } from 'next/font/google';
 import { Toaster } from 'sonner';
 import './globals.css';
 import { cn } from '@/lib/utils';
@@ -13,6 +13,13 @@ const instrumentSerif = Instrument_Serif({
   style: ['normal', 'italic'],
   display: 'swap',
   variable: '--font-instrument-serif',
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700'],
+  display: 'swap',
+  variable: '--font-space-grotesk',
 });
 
 export const metadata: Metadata = {
@@ -29,6 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           GeistSans.variable,
           GeistMono.variable,
           instrumentSerif.variable,
+          spaceGrotesk.variable,
           'antialiased',
         )}
       >

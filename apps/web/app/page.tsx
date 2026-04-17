@@ -4,10 +4,9 @@ import { eq } from 'drizzle-orm';
 import { auth } from '@cavalry/auth/server';
 import { getDb, memberships, organizations } from '@cavalry/database';
 import { TopNav } from '@/components/marketing/top-nav';
-import { Hero } from '@/components/marketing/hero-alt';
+import { Hero } from '@/components/marketing/hero';
 import {
   TrustBar,
-  GridSeparator,
   Stats,
   Problem,
   HowItWorks,
@@ -34,11 +33,10 @@ export default async function LandingPage() {
   }
 
   return (
-    <div className="light min-h-screen bg-white text-neutral-900">
+    <div className="light min-h-screen bg-white text-stone-900">
       <TopNav />
       <Hero />
       <TrustBar />
-      <GridSeparator />
       <Stats />
       <Problem />
       <HowItWorks />

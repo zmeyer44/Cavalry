@@ -1,113 +1,71 @@
 import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
 import { CellGrid } from '@/components/cell-grid';
-import { CtaButton } from '@/components/marketing/cta-button';
-import { cn } from '@/lib/utils';
-
-const dashH = 'repeating-linear-gradient(to right, oklch(0 0 0 / 0.22) 0 4px, transparent 4px 8px)';
-const dashV =
-  'repeating-linear-gradient(to bottom, oklch(0 0 0 / 0.22) 0 4px, transparent 4px 8px)';
-
-const hLineFull = 'pointer-events-none absolute left-[calc(50%-50vw)] right-[calc(50%-50vw)] h-px';
-const hLine = cn(hLineFull, 'lg:right-[-1.25rem]');
 
 export function Hero() {
   return (
-    <section className="relative mx-auto max-w-[1280px] px-6 md:px-10">
-      <div className="relative w-full">
-        <div className="pt-6 md:pt-6">
+    <section className="relative overflow-hidden bg-white">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            'radial-gradient(60% 80% at 85% 10%, oklch(0.94 0.05 260 / 0.35) 0%, transparent 60%), radial-gradient(60% 80% at 10% 70%, oklch(0.96 0.02 85 / 0.7) 0%, transparent 55%)',
+        }}
+      />
+      <div className="relative mx-auto max-w-[1280px] px-6 md:px-10">
+        <div className="pt-10 md:pt-16">
           <Link
             href="/docs/PRD"
-            className="group/badge inline-flex items-center gap-2.5 border border-primary/25 bg-primary/[0.04] px-3 py-1.5 font-mono text-[11px] uppercase leading-none tracking-[0.1em] text-primary transition-colors hover:border-primary/50 hover:bg-primary/[0.07]"
+            className="group/badge relative overflow-hidden inline-flex items-center h-[20px] gap-1.5 rounded-r-[20px] hover:rounded-r-none font-display bg-primary/10 px-2.5 py-1 pl-3.5 text-[12.5px] leading-none text-foreground hover:text-white transition-all"
           >
-            <span className="relative flex size-1.5 items-center justify-center">
-              <span className="absolute inline-flex size-full animate-ping rounded-full bg-primary opacity-60" />
-              <span className="relative size-1.5 rounded-full bg-primary" />
-            </span>
-            Alpha
-            <span className="text-primary/40">·</span>
-            Self-hostable
-            <ArrowUpRight className="size-3 transition-transform group-hover/badge:translate-x-0.5 group-hover/badge:-translate-y-0.5" />
+            <div className="z-0 absolute inset-y-0 left-0 w-1 bg-primary transition-all group-hover/badge:w-full" />
+            <span className="z-10">Cavalry Alpha · Now self-hostable</span>
+            <ArrowUpRight className="size-3 opacity-70 transition-transform group-hover/badge:translate-x-1 group-hover/badge:rotate-45 group-hover/badge:opacity-100" />
           </Link>
         </div>
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-y-0 left-0 w-px"
-          style={{ backgroundImage: dashV }}
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-y-0 right-0 w-px"
-          style={{ backgroundImage: dashV }}
-        />
-        <div className="relative mt-4 md:mt-4">
-          <div className="grid gap-6 lg:grid-cols-12 lg:gap-10">
-            <div className="relative flex flex-col gap-4 md:gap-8 lg:col-span-7">
-              <div
-                aria-hidden
-                className="pointer-events-none absolute inset-y-0 hidden w-px lg:right-[-1.25rem] lg:block"
-                style={{ backgroundImage: dashV }}
-              />
-              <div className="relative py-2 md:py-0">
-                <div
-                  aria-hidden
-                  className={cn(hLineFull, 'top-0')}
-                  style={{ backgroundImage: dashH }}
-                />
-                <h1 className="text-[48px] font-semibold leading-[0.98] tracking-[-0.035em] text-neutral-950 sm:text-[64px] md:text-[80px] lg:text-[88px]">
-                  Govern AI context at scale
-                </h1>
-                <div
-                  aria-hidden
-                  className={cn(hLine, 'bottom-0')}
-                  style={{ backgroundImage: dashH }}
-                />
-              </div>
 
-              <div className="relative">
-                <div
-                  aria-hidden
-                  className={cn(hLine, 'top-0')}
-                  style={{ backgroundImage: dashH }}
-                />
-                <p className="max-w-[720px] text-[18px] leading-[1.5] text-neutral-700 md:text-[20px]">
-                  Proxy public registries through a policy-enforcing gateway, host your internal
-                  skills, and audit every install your developers and agents make.
-                </p>
-                <div
-                  aria-hidden
-                  className={cn(hLine, 'bottom-0')}
-                  style={{ backgroundImage: dashH }}
-                />
-              </div>
+        <h1 className="mt-6 font-display text-[36px] font-semibold leading-[1.05] tracking-[-0.035em] text-stone-950 sm:text-[44px] md:text-[52px] lg:text-[58px]">
+          Govern your AI <span className="text-primary">skill&nbsp;supply&nbsp;chain</span>
+        </h1>
 
-              <div className="relative p-px md:py-0.5">
-                <div
-                  aria-hidden
-                  className={cn(hLine, 'top-0')}
-                  style={{ backgroundImage: dashH }}
-                />
-                <div className="flex flex-wrap items-center gap-3 md:gap-4">
-                  <CtaButton href="/signup" variant="primary-light">
-                    Get started
-                  </CtaButton>
-                  <CtaButton href="/contact" variant="secondary-light">
-                    Talk to an engineer
-                  </CtaButton>
-                </div>
-                <div
-                  aria-hidden
-                  className={cn(hLineFull, 'bottom-0')}
-                  style={{ backgroundImage: dashH }}
-                />
-              </div>
-            </div>
+        <p className="mt-5 max-w-[460px] text-[14.5px] leading-[1.55] text-stone-600 md:text-[15.5px]">
+          Proxy every skill install through policy, publish your internal conventions, and audit
+          every fetch.
+        </p>
 
-            <div className="relative hidden lg:col-span-5 lg:block">
-              <div className="absolute inset-y-0 right-0 left-[-1.25rem]">
-                <CellGrid seed={7} />
-              </div>
-            </div>
+        <div className="mt-7 flex flex-wrap gap-2">
+          <Link
+            href="/signup"
+            className="relative inline-flex h-10 min-w-11 flex-none cursor-pointer items-center justify-center gap-2 rounded-3xl bg-primary px-4 font-display text-[15px] font-medium text-white transition-all duration-200 hover:rounded-none"
+          >
+            Start self-hosting
+          </Link>
+          <Link
+            href="/contact"
+            className="relative inline-flex h-10 min-w-11 flex-none cursor-pointer items-center justify-center gap-2 rounded-none border-0 bg-stone-200 px-4 font-display text-[15px] font-medium text-stone-700 transition-colors duration-200 hover:bg-stone-300 hover:text-stone-900"
+          >
+            Contact sales
+          </Link>
+        </div>
+
+        <div className="mt-16 md:mt-24">
+          <div className="relative h-[170px] overflow-hidden rounded-2xl md:h-[220px]">
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0 z-10"
+              style={{
+                background:
+                  'linear-gradient(to bottom, transparent 0%, transparent 60%, #ffffff 100%), linear-gradient(to right, #ffffff 0%, transparent 8%, transparent 92%, #ffffff 100%)',
+              }}
+            />
+            <CellGrid
+              rows={3}
+              cellsPerRow={[22, 32]}
+              weightRange={[1, 3]}
+              baseFill={0.18}
+              seed={19}
+            />
           </div>
         </div>
       </div>
