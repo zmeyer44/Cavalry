@@ -15,6 +15,41 @@
       "when": 1776373667010,
       "tag": "0001_cheerful_kylun",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1776447210520,
+      "tag": "0002_sour_orphan",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1776449375340,
+      "tag": "0003_natural_captain_universe",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1776455395855,
+      "tag": "0004_clear_living_mummy",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1776455734138,
+      "tag": "0005_happy_mastermind",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1776455920805,
+      "tag": "0006_married_lady_deathstrike",
+      "breakpoints": true
     }
   ]
 }

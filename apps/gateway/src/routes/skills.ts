@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { and, desc, eq } from 'drizzle-orm';
 import { Readable } from 'node:stream';
-import { skills, skillVersions, installs } from '@cavalry/database';
+import { skills, skillVersions } from '@cavalry/database';
 import { parseManifest, skillRef as formatRef } from '@cavalry/skill-format';
 import { emitAuditEvent } from '@cavalry/audit';
 import {
@@ -11,6 +11,7 @@ import {
 import { requireToken, requireScope } from '../auth';
 import { config } from '../config';
 import { logger } from '../logger';
+import { enforcePolicy, recordAllowedInstall } from '../pipeline/policy';
 
 export const skillsRouter = new Hono();
 
@@ -113,6 +114,46 @@ skillsRouter.get(
       .limit(1);
     if (!row) return c.json({ title: 'not_found', status: 404, detail: 'Version not found' }, 404);
 
+    const userAgent = c.req.header('user-agent') ?? null;
+    const projectIdentifier = c.req.header('x-cavalry-project') ?? null;
+    const workspaceHdr = c.req.header('x-cavalry-workspace') ?? null;
+    // Wire ref stays `namespace/name@version` for backward compat (the CLI
+    // displays this verbatim). The policy context carries a normalized
+    // `internal:` prefix separately so patterns can target internal skills.
+    const ref = `${namespace}/${name}@${version}`;
+
+    const policy = await enforcePolicy({
+      auth,
+      context: {
+        action: 'install',
+        org: { id: auth.orgId },
+        workspace: workspaceHdr ? { id: workspaceHdr } : null,
+        actor: { userId: auth.userId ?? null, tokenId: auth.tokenId },
+        skill: {
+          ref: `internal:${ref}`,
+          namespace,
+          name,
+          version,
+          source: 'internal',
+        },
+      },
+      install: {
+        skillRef: ref,
+        resolvedVersion: version,
+        sourceRegistryId: null,
+        sourceSkillVersionId: row.versionId,
+        workspaceId: workspaceHdr,
+        projectIdentifier,
+        userAgent,
+      },
+    });
+    if (policy.blocked) {
+      return new Response(JSON.stringify(policy.body), {
+        status: policy.statusCode,
+        headers: { 'content-type': 'application/problem+json' },
+      });
+    }
+
     const key = buildStorageKey({
       orgId: auth.orgId,
       kind: 'skill',
@@ -127,43 +168,20 @@ skillsRouter.get(
       return c.json({ title: 'not_found', status: 404, detail: 'Artifact missing' }, 404);
     }
 
-    // Record install and emit audit event
-    const userAgent = c.req.header('user-agent') ?? undefined;
-    const projectIdentifier = c.req.header('x-cavalry-project') ?? undefined;
-    const workspaceHdr = c.req.header('x-cavalry-workspace') ?? undefined;
-    const ref = `${namespace}/${name}@${version}`;
-
-    auth.db
-      .transaction(async (tx) => {
-        const [install] = await tx
-          .insert(installs)
-          .values({
-            orgId: auth.orgId,
-            userId: auth.userId,
-            tokenId: auth.tokenId,
-            workspaceId: workspaceHdr ?? null,
-            projectIdentifier: projectIdentifier ?? null,
-            skillRef: ref,
-            resolvedVersion: version,
-            sourceSkillVersionId: row.versionId,
-            sourceRegistryId: null,
-            result: 'allowed',
-            metadata: { userAgent },
-          })
-          .returning({ id: installs.id });
-        if (!install) return;
-
-        await emitAuditEvent({
-          orgId: auth.orgId,
-          actor: { type: 'token', tokenId: auth.tokenId },
-          action: 'skill.installed',
-          resource: { type: 'skill_version', id: row.versionId },
-          payload: { ref, installId: install.id },
-          request: { userAgent },
-          tx,
-        });
-      })
-      .catch((err) => logger.error({ err }, 'failed to record install'));
+    recordAllowedInstall({
+      auth,
+      install: {
+        skillRef: ref,
+        resolvedVersion: version,
+        sourceRegistryId: null,
+        sourceSkillVersionId: row.versionId,
+        workspaceId: workspaceHdr,
+        projectIdentifier,
+        userAgent,
+      },
+      evaluations: policy.evaluations,
+      approvalId: policy.approvalId,
+    }).catch((err) => logger.error({ err }, 'failed to record install'));
 
     c.header('content-type', got.contentType);
     c.header('content-length', String(got.size));

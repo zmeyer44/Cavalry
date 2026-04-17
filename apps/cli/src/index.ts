@@ -6,6 +6,7 @@ import { whoami } from './commands/whoami';
 import { init } from './commands/init';
 import { publish } from './commands/publish';
 import { install } from './commands/install';
+import { policyList } from './commands/policy';
 
 const program = new Command();
 
@@ -44,6 +45,18 @@ program
   .option('--out <dir>', 'Output directory')
   .action(async (ref: string, cmdOpts: { out?: string }) =>
     install(ref, { ...program.opts(), outDir: cmdOpts.out }),
+  );
+
+const policyCmd = program
+  .command('policy')
+  .description('Inspect active governance policies');
+
+policyCmd
+  .command('list')
+  .description('List active policies enforced at the gateway')
+  .option('--json', 'Emit JSON instead of a table')
+  .action(async (cmdOpts: { json?: boolean }) =>
+    policyList({ ...program.opts(), json: cmdOpts.json }),
   );
 
 program

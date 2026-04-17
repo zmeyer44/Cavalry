@@ -14,6 +14,7 @@
   "dependencies": {
     "@cavalry/common": "workspace:*",
     "semver": "^7.6.3",
+    "yaml": "^2.6.1",
     "zod": "^4.0.0"
   },
   "devDependencies": {

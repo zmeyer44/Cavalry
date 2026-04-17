@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Trash2, Building2 } from 'lucide-react';
+import { Plus, Trash2, Building2, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { trpc } from '@/lib/trpc/shared';
 import { Button } from '@/components/ui/button';
@@ -53,6 +53,32 @@ export default function WorkspacesPage() {
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [description, setDescription] = useState('');
+  const [sbomBusy, setSbomBusy] = useState<string | null>(null);
+
+  const downloadSbom = async (ws: { id: string; name: string; slug: string }) => {
+    setSbomBusy(ws.id);
+    try {
+      const data = await utils.skill.sbom.fetch({ workspaceId: ws.id });
+      const blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: 'application/json;charset=utf-8',
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `cavalry-sbom-${ws.slug}-${new Date()
+        .toISOString()
+        .slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast.success(`SBOM: ${data.items.length} skill versions`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSbomBusy(null);
+    }
+  };
 
   return (
     <div className="p-6 md:p-10">
@@ -163,7 +189,18 @@ export default function WorkspacesPage() {
               <div className="col-span-1 text-right text-xs text-muted-foreground tabular">
                 {new Date(ws.createdAt).toLocaleDateString()}
               </div>
-              <div className="col-span-1 text-right">
+              <div className="col-span-1 flex items-center justify-end gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => void downloadSbom(ws)}
+                  disabled={sbomBusy === ws.id}
+                  aria-label={`Download SBOM for ${ws.name}`}
+                  title="Download SBOM"
+                  data-testid={`sbom-download-${ws.slug}`}
+                >
+                  <FileText className="size-4" />
+                </Button>
                 <Button
                   variant="ghost"
                   size="icon"

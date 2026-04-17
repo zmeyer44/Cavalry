@@ -1,0 +1,35 @@
+{
+  "name": "@cavalry/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "build": "tsc --noEmit",
+    "start": "tsx src/main.ts",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@cavalry/audit": "workspace:*",
+    "@cavalry/common": "workspace:*",
+    "@cavalry/registry-upstream": "workspace:*",
+    "@cavalry/database": "workspace:*",
+    "@cavalry/git-provider": "workspace:*",
+    "@cavalry/git-sync": "workspace:*",
+    "@cavalry/skill-format": "workspace:*",
+    "@cavalry/slack": "workspace:*",
+    "@cavalry/storage": "workspace:*",
+    "dotenv": "^16.4.7",
+    "drizzle-orm": "^0.45.2",
+    "pg-boss": "^10.1.5",
+    "pino": "^9.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.8"
+  }
+}

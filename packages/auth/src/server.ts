@@ -17,6 +17,9 @@ export const auth = betterAuth({
     minPasswordLength: 8,
     maxPasswordLength: 128,
   },
+  rateLimit: {
+    enabled: process.env.CAVALRY_ENV !== 'test',
+  },
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
     updateAge: 60 * 60 * 24, // 1 day

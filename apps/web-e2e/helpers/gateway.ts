@@ -122,3 +122,74 @@ export async function fetchArtifact(params: {
     ref: res.headers.get('x-cavalry-skill-ref') ?? '',
   };
 }
+
+export interface RawInstallResult {
+  status: number;
+  contentType: string;
+  body: Buffer;
+  headers: Headers;
+  json(): Record<string, unknown> | null;
+}
+
+/**
+ * Install attempt that does NOT throw on non-2xx. Use this when the test
+ * expects a policy block or other error and wants to assert on the body.
+ */
+export async function attemptInstall(params: {
+  token: string;
+  namespace: string;
+  name: string;
+  version: string;
+  headers?: Record<string, string>;
+}): Promise<RawInstallResult> {
+  const res = await fetch(
+    `${GATEWAY_URL}/v1/skills/${params.namespace}/${params.name}/${params.version}/artifact`,
+    {
+      method: 'GET',
+      headers: {
+        authorization: `Bearer ${params.token}`,
+        'user-agent': 'cavalry-e2e',
+        ...(params.headers ?? {}),
+      },
+    },
+  );
+  const body = Buffer.from(await res.arrayBuffer());
+  const contentType = res.headers.get('content-type') ?? '';
+  return {
+    status: res.status,
+    contentType,
+    body,
+    headers: res.headers,
+    json(): Record<string, unknown> | null {
+      if (!contentType.includes('json')) return null;
+      try {
+        return JSON.parse(body.toString('utf8')) as Record<string, unknown>;
+      } catch {
+        return null;
+      }
+    },
+  };
+}
+
+export async function mcpRequest(params: {
+  token: string;
+  method: string;
+  params?: Record<string, unknown>;
+  id?: number;
+}): Promise<{ status: number; body: Record<string, unknown> }> {
+  const res = await fetch(`${GATEWAY_URL}/mcp`, {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${params.token}`,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      id: params.id ?? 1,
+      method: params.method,
+      params: params.params,
+    }),
+  });
+  const body = (await res.json()) as Record<string, unknown>;
+  return { status: res.status, body };
+}

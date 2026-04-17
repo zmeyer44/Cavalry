@@ -17,6 +17,11 @@
     "@cavalry/audit": "workspace:*",
     "@cavalry/common": "workspace:*",
     "@cavalry/database": "workspace:*",
+    "@cavalry/git-provider": "workspace:*",
+    "@cavalry/git-sync": "workspace:*",
+    "@cavalry/policy": "workspace:*",
+    "@cavalry/slack": "workspace:*",
+    "@cavalry/registry-upstream": "workspace:*",
     "@cavalry/skill-format": "workspace:*",
     "@paralleldrive/cuid2": "^2.2.2",
     "@playwright/test": "^1.59.1",
@@ -29,6 +34,7 @@
     "@types/node": "^22.10.1",
     "@types/pg": "^8.11.10",
     "@types/tar": "^6.1.13",
+    "tsx": "^4.19.2",
     "typescript": "^5.9.3"
   }
 }

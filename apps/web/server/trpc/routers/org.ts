@@ -24,6 +24,16 @@ export const orgRouter = router({
     role: ctx.role,
   })),
 
+  completeOnboarding: adminProcedure.mutation(async ({ ctx }) => {
+    const current = (ctx.org.settings ?? {}) as Record<string, unknown>;
+    const next = { ...current, onboardingCompletedAt: new Date().toISOString() };
+    await ctx.db
+      .update(organizations)
+      .set({ settings: next, updatedAt: new Date() })
+      .where(eq(organizations.id, ctx.org.id));
+    return { ok: true };
+  }),
+
   update: adminProcedure
     .input(
       z.object({

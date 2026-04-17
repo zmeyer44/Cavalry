@@ -28,7 +28,10 @@ test.describe('M2.5 smoke', () => {
       .getByRole('button', { name: /create organization/i })
       .click();
 
-    await page.waitForURL(`**/${orgSlug}`, { timeout: 30_000 });
+    // Signup now lands on the onboarding wizard. Jump directly to the
+    // dashboard to exercise the rest of the journey.
+    await page.waitForURL(`**/${orgSlug}/onboarding`, { timeout: 30_000 });
+    await page.goto(`/${orgSlug}`);
     await expect(
       page.getByRole('link', { name: /skills/i }).first(),
     ).toBeVisible();

@@ -2,7 +2,7 @@
 
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Check, Copy } from 'lucide-react';
+import { ArrowLeft, Check, Copy, GitCompareArrows } from 'lucide-react';
 import { useState } from 'react';
 import { trpc } from '@/lib/trpc/shared';
 import { PageHeader } from '@/components/page-header';
@@ -134,6 +134,99 @@ export default function SkillDetailPage() {
           </p>
         )}
       </section>
+
+      {versions.data && versions.data.length >= 2 ? (
+        <VersionDiff
+          namespace={namespace}
+          name={name}
+          versions={versions.data.map((v) => v.version)}
+        />
+      ) : null}
     </div>
+  );
+}
+
+function VersionDiff({
+  namespace,
+  name,
+  versions,
+}: {
+  namespace: string;
+  name: string;
+  versions: string[];
+}) {
+  const [vA, setVA] = useState<string | undefined>(versions[1]);
+  const [vB, setVB] = useState<string | undefined>(versions[0]);
+  const diff = trpc.skill.diffVersions.useQuery(
+    {
+      namespace,
+      name,
+      versionA: vA ?? versions[1] ?? versions[0] ?? '',
+      versionB: vB ?? versions[0] ?? '',
+    },
+    { enabled: Boolean(vA && vB && vA !== vB) },
+  );
+
+  const manifestA = diff.data?.a.manifest as Record<string, unknown> | undefined;
+  const manifestB = diff.data?.b.manifest as Record<string, unknown> | undefined;
+
+  return (
+    <section className="mt-10" data-testid="version-diff">
+      <header className="mb-3 flex items-center gap-3">
+        <GitCompareArrows className="size-4 text-muted-foreground" />
+        <h2 className="text-sm font-medium">Compare versions</h2>
+        <select
+          value={vA}
+          onChange={(e) => setVA(e.target.value)}
+          className="rounded border border-border bg-background px-2 py-1 text-xs"
+        >
+          {versions.map((v) => (
+            <option key={`a-${v}`} value={v}>
+              {v}
+            </option>
+          ))}
+        </select>
+        <span className="text-xs text-muted-foreground">→</span>
+        <select
+          value={vB}
+          onChange={(e) => setVB(e.target.value)}
+          className="rounded border border-border bg-background px-2 py-1 text-xs"
+        >
+          {versions.map((v) => (
+            <option key={`b-${v}`} value={v}>
+              {v}
+            </option>
+          ))}
+        </select>
+      </header>
+      {vA && vB && vA === vB ? (
+        <p className="text-xs text-muted-foreground">Pick two different versions.</p>
+      ) : diff.data ? (
+        <div className="grid grid-cols-2 gap-4">
+          <div className="rounded-lg border border-border bg-card p-4">
+            <p className="cav-label text-muted-foreground">{diff.data.a.version}</p>
+            <p className="mt-1 font-mono text-[11px]">
+              {humanBytes(diff.data.a.artifactSizeBytes)} ·{' '}
+              {diff.data.a.artifactHash.slice(0, 12)}…
+            </p>
+            <pre className="mt-3 overflow-auto rounded bg-muted p-2 font-mono text-[11px]">
+              {JSON.stringify(manifestA, null, 2)}
+            </pre>
+          </div>
+          <div className="rounded-lg border border-border bg-card p-4">
+            <p className="cav-label text-muted-foreground">{diff.data.b.version}</p>
+            <p className="mt-1 font-mono text-[11px]">
+              {humanBytes(diff.data.b.artifactSizeBytes)} ·{' '}
+              {diff.data.b.artifactHash.slice(0, 12)}…
+            </p>
+            <pre className="mt-3 overflow-auto rounded bg-muted p-2 font-mono text-[11px]">
+              {JSON.stringify(manifestB, null, 2)}
+            </pre>
+          </div>
+        </div>
+      ) : (
+        <p className="text-xs text-muted-foreground">Loading…</p>
+      )}
+    </section>
   );
 }

@@ -1,0 +1,28 @@
+{
+  "name": "@cavalry/git-provider",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./github": "./src/github/index.ts"
+  },
+  "scripts": {
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@cavalry/common": "workspace:*",
+    "@octokit/app": "^15.1.0",
+    "@octokit/core": "^6.1.2",
+    "@octokit/request-error": "^6.1.6",
+    "@octokit/webhooks-methods": "^5.1.0",
+    "undici": "^7.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.8"
+  }
+}

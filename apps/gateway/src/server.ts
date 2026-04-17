@@ -5,6 +5,9 @@ import { config } from './config';
 import { logger } from './logger';
 import { healthRouter } from './routes/health';
 import { skillsRouter } from './routes/skills';
+import { proxyRouter } from './routes/proxy';
+import { policiesRouter } from './routes/policies';
+import { mcpRouter } from './routes/mcp';
 
 const app = new Hono();
 
@@ -12,6 +15,9 @@ app.use('*', reqLogger((msg) => logger.info(msg)));
 
 app.route('/', healthRouter);
 app.route('/', skillsRouter);
+app.route('/', proxyRouter);
+app.route('/', policiesRouter);
+app.route('/', mcpRouter);
 
 app.onError((err, c) => {
   logger.error({ err }, 'unhandled gateway error');

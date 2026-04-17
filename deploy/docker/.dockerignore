@@ -1,0 +1,15 @@
+**/node_modules
+**/.next
+**/.turbo
+**/dist
+**/.env
+**/.env.local
+**/.cavalry-storage
+**/.cavalry-e2e-storage
+**/test-results
+**/playwright-report
+.git
+.github
+docs
+.vscode
+*.log
