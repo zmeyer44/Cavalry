@@ -37,9 +37,9 @@ export default async function LandingPage() {
       <TopNav />
       <Hero />
       <TrustBar />
+      <HowItWorks />
       <Stats />
       <Problem />
-      <HowItWorks />
       <Features />
       <Personas />
       <Comparison />

@@ -1,4 +1,7 @@
+'use client';
+
 import { Boxes, Check, KeyRound, ScrollText, ShieldCheck, Terminal, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 /**
@@ -274,30 +277,365 @@ export function TerminalMockup() {
 
 // ─── Gateway flow diagram ──────────────────────────────────────────────
 
+const GW_CLIENTS = [
+  { id: 'cc', abbr: 'cc', name: 'Claude Code' },
+  { id: 'cu', abbr: 'cu', name: 'Cursor' },
+  { id: 'co', abbr: 'co', name: 'Codex' },
+  { id: 'cli', abbr: '$', name: 'cavalry CLI' },
+] as const;
+type GwClientId = (typeof GW_CLIENTS)[number]['id'];
+
+const GW_REGS = [
+  { id: 'tessl', name: 'Tessl' },
+  { id: 'github', name: 'GitHub' },
+  { id: 'http', name: 'HTTP' },
+  { id: 'internal', name: 'Internal' },
+] as const;
+type GwRegId = (typeof GW_REGS)[number]['id'];
+
+type GwStep = 'authn' | 'policy' | 'cache' | 'audit';
+type StepState = 'idle' | 'lit' | 'blocked';
+type Scenario = { client: GwClientId; reg: GwRegId; kind: 'ok' | 'block' | 'cache' };
+
+const GW_SCENARIOS: Scenario[] = [
+  { client: 'cc', reg: 'tessl', kind: 'ok' },
+  { client: 'cu', reg: 'github', kind: 'ok' },
+  { client: 'co', reg: 'internal', kind: 'ok' },
+  { client: 'cli', reg: 'tessl', kind: 'ok' },
+  { client: 'cc', reg: 'internal', kind: 'cache' },
+  { client: 'cu', reg: 'http', kind: 'block' },
+  { client: 'co', reg: 'tessl', kind: 'ok' },
+  { client: 'cli', reg: 'github', kind: 'block' },
+  { client: 'cc', reg: 'http', kind: 'ok' },
+  { client: 'cu', reg: 'tessl', kind: 'cache' },
+];
+
+const PKT_VARIANTS = {
+  req: {
+    background: 'oklch(0.66 0.21 265)',
+    boxShadow:
+      'inset 0 0 0 1px oklch(1 0 0 / 0.18), 0 0 18px oklch(0.66 0.21 265 / 0.45)',
+  },
+  response: {
+    background: 'oklch(0.52 0.14 152)',
+    boxShadow:
+      'inset 0 0 0 1px oklch(1 0 0 / 0.18), 0 0 18px oklch(0.55 0.14 152 / 0.45)',
+  },
+  blocked: {
+    background: 'oklch(0.55 0.22 22)',
+    boxShadow:
+      'inset 0 0 0 1px oklch(1 0 0 / 0.18), 0 0 18px oklch(0.60 0.22 22 / 0.45)',
+  },
+} as const;
+
+function gwClientName(id: GwClientId) {
+  return { cc: 'Claude Code', cu: 'Cursor', co: 'Codex', cli: 'cavalry CLI' }[id];
+}
+function gwRegName(id: GwRegId) {
+  return { tessl: 'Tessl', github: 'GitHub', http: 'HTTP', internal: 'Internal' }[id];
+}
+
 export function GatewayFlowMockup() {
-  const clients = [
-    { name: 'Claude Code', abbr: 'CC' },
-    { name: 'Cursor', abbr: 'Cu' },
-    { name: 'Codex', abbr: 'Co' },
-    { name: 'cavalry CLI', abbr: '$' },
-  ];
-  const sources = [
-    { name: 'Tessl', tone: 'bg-neutral-800' },
-    { name: 'GitHub', tone: 'bg-neutral-800' },
-    { name: 'HTTP', tone: 'bg-neutral-800' },
-    { name: 'Internal', tone: 'bg-[oklch(0.66_0.21_265)]/30 border border-[oklch(0.66_0.21_265)]/60' },
-  ];
+  const stageRef = useRef<HTMLDivElement>(null);
+  const gatewayRef = useRef<HTMLDivElement>(null);
+  const fxRef = useRef<SVGSVGElement>(null);
+  const packetRef = useRef<HTMLDivElement>(null);
+  const clientRefs = useRef<Record<GwClientId, HTMLDivElement | null>>({
+    cc: null,
+    cu: null,
+    co: null,
+    cli: null,
+  });
+  const regRefs = useRef<Record<GwRegId, HTMLDivElement | null>>({
+    tessl: null,
+    github: null,
+    http: null,
+    internal: null,
+  });
+
+  const [activeClient, setActiveClient] = useState<GwClientId | null>(null);
+  const [activeReg, setActiveReg] = useState<GwRegId | null>(null);
+  const [steps, setSteps] = useState<Record<GwStep, StepState>>({
+    authn: 'idle',
+    policy: 'idle',
+    cache: 'idle',
+    audit: 'idle',
+  });
+  const [caption, setCaption] = useState<{ text: string; kind?: 'ok' | 'blocked' }>({
+    text: 'idle',
+  });
+
+  useEffect(() => {
+    const stage = stageRef.current;
+    const gw = gatewayRef.current;
+    const fx = fxRef.current;
+    const pkt = packetRef.current;
+    if (!stage || !gw || !fx || !pkt) return;
+
+    const desktop = window.matchMedia('(min-width: 768px)');
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (!desktop.matches || reducedMotion.matches) return;
+
+    let cancelled = false;
+    let scenarioIdx = -1;
+    const timers = new Set<ReturnType<typeof setTimeout>>();
+
+    const wait = (ms: number) =>
+      new Promise<void>((resolve) => {
+        const t = setTimeout(() => {
+          timers.delete(t);
+          resolve();
+        }, ms);
+        timers.add(t);
+      });
+
+    function rectOf(el: Element) {
+      const s = stage!.getBoundingClientRect();
+      const r = el.getBoundingClientRect();
+      return {
+        x: r.left - s.left + r.width / 2,
+        y: r.top - s.top + r.height / 2,
+        left: r.left - s.left,
+        right: r.right - s.left,
+      };
+    }
+
+    function drawRail(x1: number, y1: number, x2: number, y2: number) {
+      const ns = 'http://www.w3.org/2000/svg';
+      const line = document.createElementNS(ns, 'line');
+      line.setAttribute('x1', String(x1));
+      line.setAttribute('y1', String(y1));
+      line.setAttribute('x2', String(x2 - 7));
+      line.setAttribute('y2', String(y2));
+      line.setAttribute('stroke', 'oklch(1 0 0 / 0.1)');
+      line.setAttribute('stroke-width', '1');
+      line.setAttribute('stroke-dasharray', '3 4');
+      line.setAttribute('fill', 'none');
+      fx!.appendChild(line);
+      const arrow = document.createElementNS(ns, 'path');
+      arrow.setAttribute(
+        'd',
+        `M ${x2} ${y2} L ${x2 - 6} ${y2 - 3} L ${x2 - 6} ${y2 + 3} Z`,
+      );
+      arrow.setAttribute('fill', 'oklch(0.40 0.012 220)');
+      fx!.appendChild(arrow);
+    }
+
+    function drawRails() {
+      const s = stage!.getBoundingClientRect();
+      fx!.setAttribute('viewBox', `0 0 ${s.width} ${s.height}`);
+      fx!.setAttribute('width', String(s.width));
+      fx!.setAttribute('height', String(s.height));
+      fx!.innerHTML = '';
+      const g = rectOf(gw!);
+      for (const c of GW_CLIENTS) {
+        const el = clientRefs.current[c.id];
+        if (!el) continue;
+        const r = rectOf(el);
+        drawRail(r.right + 10, r.y, g.left - 10, r.y);
+      }
+      for (const rg of GW_REGS) {
+        const el = regRefs.current[rg.id];
+        if (!el) continue;
+        const r = rectOf(el);
+        drawRail(g.right + 10, r.y, r.left - 10, r.y);
+      }
+    }
+
+    drawRails();
+    const ro = new ResizeObserver(drawRails);
+    ro.observe(stage);
+
+    function moveTo(x: number, y: number, ms: number, ease = 'cubic-bezier(0.4,0,0.2,1)') {
+      return new Promise<void>((resolve) => {
+        pkt!.style.transition = `transform ${ms}ms ${ease}, opacity ${ms}ms ${ease}`;
+        pkt!.style.transform = `translate(${x}px, ${y}px)`;
+        const t = setTimeout(() => {
+          timers.delete(t);
+          resolve();
+        }, ms);
+        timers.add(t);
+      });
+    }
+
+    function fade(to: number, ms: number) {
+      return new Promise<void>((resolve) => {
+        pkt!.style.transition = `opacity ${ms}ms ease`;
+        pkt!.style.opacity = String(to);
+        const t = setTimeout(() => {
+          timers.delete(t);
+          resolve();
+        }, ms);
+        timers.add(t);
+      });
+    }
+
+    function setPacket(label: string, variant: keyof typeof PKT_VARIANTS) {
+      pkt!.textContent = label;
+      pkt!.style.background = PKT_VARIANTS[variant].background;
+      pkt!.style.boxShadow = PKT_VARIANTS[variant].boxShadow;
+    }
+
+    function resetSteps() {
+      setSteps({ authn: 'idle', policy: 'idle', cache: 'idle', audit: 'idle' });
+    }
+
+    async function runOnce() {
+      scenarioIdx = (scenarioIdx + 1) % GW_SCENARIOS.length;
+      const scenario = GW_SCENARIOS[scenarioIdx]!;
+      const clientEl = clientRefs.current[scenario.client];
+      const regEl = regRefs.current[scenario.reg];
+      if (!clientEl || !regEl) return;
+
+      const c = rectOf(clientEl);
+      const r = rectOf(regEl);
+      const g = rectOf(gw!);
+      const T1 = 1100;
+      const T2 = 1100;
+      const PIPE = 900;
+
+      resetSteps();
+      setActiveClient(scenario.client);
+      setCaption({
+        text: `${gwClientName(scenario.client)} → ${
+          scenario.kind === 'block' ? 'denied' : 'request'
+        }`,
+        kind: scenario.kind === 'block' ? 'blocked' : 'ok',
+      });
+
+      const startX = c.right + 18;
+      const startY = c.y;
+      const enterX = g.left - 12;
+
+      setPacket('REQ', 'req');
+      pkt!.style.transition = 'none';
+      pkt!.style.transform = `translate(${startX}px, ${startY}px)`;
+      pkt!.style.opacity = '0';
+      await wait(20);
+      if (cancelled) return;
+      pkt!.style.transition = 'opacity 200ms';
+      pkt!.style.opacity = '1';
+
+      await moveTo(enterX, startY, T1);
+      if (cancelled) return;
+      setActiveClient(null);
+
+      await moveTo(g.x, g.y - 10, 220);
+      if (cancelled) return;
+
+      setSteps((s) => ({ ...s, authn: 'lit' }));
+      await wait(PIPE / 4);
+      if (cancelled) return;
+
+      if (scenario.kind === 'block') {
+        setSteps((s) => ({ ...s, policy: 'blocked' }));
+        setPacket('DENY', 'blocked');
+        await wait(PIPE / 3);
+        if (cancelled) return;
+        setSteps((s) => ({ ...s, audit: 'lit' }));
+        await wait(PIPE / 4);
+        if (cancelled) return;
+
+        await moveTo(enterX, startY, 220);
+        await moveTo(startX, startY, T1, 'cubic-bezier(0.5,0,0.2,1)');
+        await fade(0, 200);
+        if (cancelled) return;
+        await wait(400);
+        resetSteps();
+        setCaption({ text: 'idle' });
+        return;
+      }
+
+      setSteps((s) => ({ ...s, policy: 'lit' }));
+      await wait(PIPE / 4);
+      if (cancelled) return;
+      setSteps((s) => ({ ...s, cache: 'lit' }));
+      await wait(PIPE / 4);
+      if (cancelled) return;
+
+      if (scenario.kind === 'cache') {
+        setSteps((s) => ({ ...s, audit: 'lit' }));
+        setPacket('CACHE HIT', 'req');
+        setCaption({
+          text: `${gwClientName(scenario.client)} ← served from cache`,
+          kind: 'ok',
+        });
+        await wait(PIPE / 3);
+        if (cancelled) return;
+        setPacket('200', 'response');
+        await moveTo(enterX, startY, 220);
+        await moveTo(startX, startY, T1);
+        if (cancelled) return;
+        setActiveClient(scenario.client);
+        await fade(0, 200);
+        await wait(200);
+        if (cancelled) return;
+        setActiveClient(null);
+        await wait(300);
+        resetSteps();
+        setCaption({ text: 'idle' });
+        return;
+      }
+
+      setSteps((s) => ({ ...s, audit: 'lit' }));
+      await wait(PIPE / 4);
+      if (cancelled) return;
+
+      setCaption({ text: `fetch ${gwRegName(scenario.reg)}`, kind: 'ok' });
+      await moveTo(g.right + 12, g.y - 10, 180);
+      await moveTo(r.left - 18, r.y, T2);
+      if (cancelled) return;
+      setActiveReg(scenario.reg);
+      await wait(320);
+      if (cancelled) return;
+
+      setPacket('200', 'response');
+      setCaption({
+        text: `${gwClientName(scenario.client)} ← ${gwRegName(scenario.reg)}`,
+        kind: 'ok',
+      });
+      await moveTo(g.right + 12, r.y, T2);
+      if (cancelled) return;
+      setActiveReg(null);
+
+      await moveTo(enterX, startY, 220);
+      setActiveClient(scenario.client);
+      await moveTo(startX, startY, 900);
+      await fade(0, 200);
+      if (cancelled) return;
+      await wait(200);
+      setActiveClient(null);
+      await wait(350);
+      resetSteps();
+      setCaption({ text: 'idle' });
+    }
+
+    (async () => {
+      while (!cancelled) {
+        await runOnce();
+        if (cancelled) return;
+        await wait(700);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      ro.disconnect();
+      for (const t of timers) clearTimeout(t);
+      timers.clear();
+    };
+  }, []);
 
   return (
     <MockupChrome title="flow · gateway.proxy" subtitle="policy · cache · audit">
-      <div className="grid grid-cols-1 items-stretch gap-5 p-4 text-[12.5px] sm:p-5 md:grid-cols-5 md:gap-0">
-        {/* clients */}
-        <div className="md:col-span-1">
+      {/* Mobile: static stacked fallback */}
+      <div className="space-y-4 p-4 md:hidden">
+        <div>
           <div className="cav-label text-neutral-500">clients</div>
-          <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-1">
-            {clients.map((c) => (
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            {GW_CLIENTS.map((c) => (
               <div
-                key={c.name}
+                key={c.id}
                 className="flex items-center gap-2 rounded-md border border-neutral-800 bg-neutral-900 px-2 py-1.5"
               >
                 <span className="flex size-5 shrink-0 items-center justify-center rounded bg-neutral-800 font-mono text-[10px]">
@@ -308,107 +646,47 @@ export function GatewayFlowMockup() {
             ))}
           </div>
         </div>
-
-        {/* mobile arrow · clients → gateway */}
-        <div className="flex justify-center text-neutral-600 md:hidden">
+        <div className="flex justify-center text-neutral-600">
           <svg viewBox="0 0 14 36" className="h-9 w-[14px]">
-            <line
-              x1={7}
-              y1={0}
-              x2={7}
-              y2={28}
-              strokeDasharray="3 3"
-              stroke="currentColor"
-              strokeWidth={1.5}
-            />
+            <line x1={7} y1={0} x2={7} y2={28} strokeDasharray="3 3" stroke="currentColor" strokeWidth={1.5} />
             <path d="M3 28 L7 36 L11 28 Z" fill="currentColor" />
           </svg>
         </div>
-
-        {/* desktop arrows · clients → gateway */}
-        <div className="hidden flex-col items-center justify-center gap-1 text-neutral-600 md:col-span-1 md:flex">
-          {clients.map((_, i) => (
-            <svg key={i} viewBox="0 0 60 14" className="h-[14px] w-full">
-              <line
-                x1={0}
-                y1={7}
-                x2={54}
-                y2={7}
-                strokeDasharray="3 3"
-                stroke="currentColor"
-                strokeWidth={1.5}
-              />
-              <path d="M54 3 L60 7 L54 11 Z" fill="currentColor" />
-            </svg>
-          ))}
+        <div className="rounded-xl border border-[oklch(0.66_0.21_265)] bg-[oklch(0.66_0.21_265)]/10 p-4 text-center shadow-[0_0_40px_oklch(0.66_0.21_265_/_0.25)]">
+          <div className="cav-label text-[oklch(0.66_0.21_265)]">Cavalry</div>
+          <div className="mt-1 text-[15px] font-medium">Gateway</div>
+          <ul className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-left text-[11px] text-neutral-400">
+            <li className="flex items-center gap-1.5">
+              <Check className="size-3 shrink-0 text-[oklch(0.73_0.14_152)]" /> authn · tokens
+            </li>
+            <li className="flex items-center gap-1.5">
+              <Check className="size-3 shrink-0 text-[oklch(0.73_0.14_152)]" /> policy eval
+            </li>
+            <li className="flex items-center gap-1.5">
+              <Check className="size-3 shrink-0 text-[oklch(0.73_0.14_152)]" /> cache
+            </li>
+            <li className="flex items-center gap-1.5">
+              <Check className="size-3 shrink-0 text-[oklch(0.73_0.14_152)]" /> audit emit
+            </li>
+          </ul>
         </div>
-
-        {/* gateway */}
-        <div className="flex flex-col justify-center md:col-span-1">
-          <div className="rounded-xl border border-[oklch(0.66_0.21_265)] bg-[oklch(0.66_0.21_265)]/10 p-4 text-center shadow-[0_0_40px_oklch(0.66_0.21_265_/_0.25)]">
-            <div className="cav-label text-[oklch(0.66_0.21_265)]">Cavalry</div>
-            <div className="mt-1 text-[15px] font-medium">Gateway</div>
-            <ul className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-left text-[11px] text-neutral-400 md:grid-cols-1 md:gap-1">
-              <li className="flex items-center gap-1.5">
-                <Check className="size-3 shrink-0 text-[oklch(0.73_0.14_152)]" /> authn · tokens
-              </li>
-              <li className="flex items-center gap-1.5">
-                <Check className="size-3 shrink-0 text-[oklch(0.73_0.14_152)]" /> policy eval
-              </li>
-              <li className="flex items-center gap-1.5">
-                <Check className="size-3 shrink-0 text-[oklch(0.73_0.14_152)]" /> cache
-              </li>
-              <li className="flex items-center gap-1.5">
-                <Check className="size-3 shrink-0 text-[oklch(0.73_0.14_152)]" /> audit emit
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        {/* desktop arrows · gateway → sources */}
-        <div className="hidden flex-col items-center justify-center gap-1 text-neutral-600 md:col-span-1 md:flex">
-          {sources.map((_, i) => (
-            <svg key={i} viewBox="0 0 60 14" className="h-[14px] w-full">
-              <line
-                x1={6}
-                y1={7}
-                x2={60}
-                y2={7}
-                strokeDasharray="3 3"
-                stroke="currentColor"
-                strokeWidth={1.5}
-              />
-              <path d="M60 3 L66 7 L60 11 Z" fill="currentColor" />
-            </svg>
-          ))}
-        </div>
-
-        {/* mobile arrow · gateway → sources */}
-        <div className="flex justify-center text-neutral-600 md:hidden">
+        <div className="flex justify-center text-neutral-600">
           <svg viewBox="0 0 14 36" className="h-9 w-[14px]">
-            <line
-              x1={7}
-              y1={0}
-              x2={7}
-              y2={28}
-              strokeDasharray="3 3"
-              stroke="currentColor"
-              strokeWidth={1.5}
-            />
+            <line x1={7} y1={0} x2={7} y2={28} strokeDasharray="3 3" stroke="currentColor" strokeWidth={1.5} />
             <path d="M3 28 L7 36 L11 28 Z" fill="currentColor" />
           </svg>
         </div>
-
-        {/* sources */}
-        <div className="md:col-span-1">
-          <div className="cav-label text-neutral-500 md:text-right">registries</div>
-          <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-1">
-            {sources.map((s) => (
+        <div>
+          <div className="cav-label text-neutral-500">registries</div>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            {GW_REGS.map((s) => (
               <div
-                key={s.name}
+                key={s.id}
                 className={cn(
                   'flex items-center gap-2 rounded-md px-2 py-1.5 text-[12px]',
-                  s.tone,
+                  s.id === 'internal'
+                    ? 'border border-[oklch(0.66_0.21_265)]/60 bg-[oklch(0.66_0.21_265)]/30'
+                    : 'bg-neutral-800',
                 )}
               >
                 <span className="size-1.5 shrink-0 rounded-full bg-[oklch(0.66_0.21_265)]" />
@@ -416,6 +694,176 @@ export function GatewayFlowMockup() {
               </div>
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* Desktop: animated flow */}
+      <div
+        ref={stageRef}
+        className="relative hidden min-h-[440px] overflow-hidden px-8 pb-12 pt-10 md:block"
+      >
+        <div className="mb-5 flex items-center justify-between">
+          <span className="cav-label text-neutral-500">clients</span>
+          <span className="cav-label text-neutral-500">registries</span>
+        </div>
+
+        <div className="grid grid-cols-[1fr_1.2fr_1fr] items-center gap-0">
+          <div className="flex flex-col gap-3">
+            {GW_CLIENTS.map((c) => {
+              const active = activeClient === c.id;
+              return (
+                <div
+                  key={c.id}
+                  ref={(el) => {
+                    clientRefs.current[c.id] = el;
+                  }}
+                  className={cn(
+                    'flex h-11 items-center gap-3 rounded-md border px-3.5 text-[13.5px] transition-colors duration-300',
+                    active
+                      ? 'border-[oklch(0.66_0.21_265)]/50 bg-[oklch(0.20_0.06_260)] text-white'
+                      : 'border-neutral-800 bg-[oklch(0.164_0.011_230)] text-neutral-300',
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'flex size-6 shrink-0 items-center justify-center rounded font-mono text-[10.5px] transition-colors duration-300',
+                      active
+                        ? 'bg-[oklch(0.66_0.21_265)] text-white'
+                        : 'bg-neutral-800 text-neutral-300',
+                    )}
+                  >
+                    {c.abbr}
+                  </span>
+                  <span className="flex-1 truncate">{c.name}</span>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="flex justify-center">
+            <div
+              ref={gatewayRef}
+              className="w-[260px] rounded-xl border border-[oklch(0.66_0.21_265)]/50 bg-[oklch(0.17_0.05_260)] px-5 py-[18px] shadow-[0_0_0_4px_oklch(0.66_0.21_265_/_0.06),0_20px_40px_-20px_oklch(0.35_0.2_260_/_0.5)]"
+            >
+              <div className="cav-label text-center text-[oklch(0.78_0.10_260)]">Cavalry</div>
+              <div className="mt-1 mb-4 text-center text-[22px] font-semibold leading-tight tracking-tight text-white">
+                Gateway
+              </div>
+              <div className="flex flex-col gap-2.5">
+                {(['authn', 'policy', 'cache', 'audit'] as const).map((step) => {
+                  const state = steps[step];
+                  return (
+                    <div
+                      key={step}
+                      className={cn(
+                        'flex items-center gap-2.5 text-[13px] transition-colors duration-300',
+                        state === 'idle' ? 'text-neutral-500' : 'text-white',
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          'flex size-[13px] shrink-0 items-center justify-center rounded-[3px] border transition-all duration-300',
+                          state === 'lit'
+                            ? 'border-[oklch(0.58_0.14_150)] bg-[oklch(0.42_0.14_150)]'
+                            : state === 'blocked'
+                              ? 'border-[oklch(0.55_0.22_22)] bg-[oklch(0.38_0.20_22)]'
+                              : 'border-[oklch(0.66_0.21_265)]/30 bg-[oklch(0.24_0.04_260)]',
+                        )}
+                      >
+                        <svg viewBox="0 0 10 10" className="size-2">
+                          <path
+                            d="M1.5 5.5 L4 8 L8.5 2"
+                            fill="none"
+                            stroke={state === 'idle' ? 'oklch(0.66 0.21 265)' : '#fff'}
+                            strokeOpacity={state === 'idle' ? 0.55 : 1}
+                            strokeWidth={2.5}
+                          />
+                        </svg>
+                      </span>
+                      {step}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            {GW_REGS.map((rg) => {
+              const isActive = activeReg === rg.id;
+              const isInternal = rg.id === 'internal';
+              return (
+                <div
+                  key={rg.id}
+                  ref={(el) => {
+                    regRefs.current[rg.id] = el;
+                  }}
+                  className={cn(
+                    'flex h-11 items-center gap-3 rounded-md border px-3.5 text-[13.5px] transition-colors duration-300',
+                    isActive
+                      ? 'border-[oklch(0.66_0.21_265)]/60 bg-[oklch(0.22_0.07_260)] text-white'
+                      : isInternal
+                        ? 'border-[oklch(0.66_0.21_265)]/50 bg-[oklch(0.22_0.07_260)] text-white'
+                        : 'border-neutral-800 bg-[oklch(0.164_0.011_230)] text-neutral-300',
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'size-1.5 shrink-0 rounded-full transition-all duration-300',
+                      isActive || isInternal
+                        ? 'bg-[oklch(0.66_0.21_265)] shadow-[0_0_0_3px_oklch(0.66_0.21_265_/_0.18)]'
+                        : 'bg-neutral-600',
+                    )}
+                  />
+                  <span className="flex-1 truncate">{rg.name}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <svg
+          ref={fxRef}
+          className="pointer-events-none absolute inset-0 overflow-visible"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden
+        />
+
+        <div
+          ref={packetRef}
+          className="pointer-events-none absolute left-0 top-0 whitespace-nowrap rounded-[4px] px-2 py-[3px] font-mono text-[9.5px] font-medium tracking-wider text-white opacity-0"
+          style={{
+            transform: 'translate(-9999px, -9999px)',
+            willChange: 'transform, opacity',
+            background: PKT_VARIANTS.req.background,
+            boxShadow: PKT_VARIANTS.req.boxShadow,
+          }}
+          aria-hidden
+        >
+          REQ
+        </div>
+
+        <div
+          className={cn(
+            'absolute inset-x-0 bottom-4 flex items-center justify-center gap-2.5 font-mono text-[10.5px] uppercase tracking-[0.18em] transition-colors duration-300',
+            caption.kind === 'ok'
+              ? 'text-neutral-300'
+              : caption.kind === 'blocked'
+                ? 'text-[oklch(0.80_0.12_22)]'
+                : 'text-neutral-500',
+          )}
+        >
+          <span
+            className={cn(
+              'size-1.5 rounded-full transition-all duration-300',
+              caption.kind === 'ok'
+                ? 'bg-[oklch(0.73_0.14_152)] shadow-[0_0_0_3px_oklch(0.73_0.14_152_/_0.18)]'
+                : caption.kind === 'blocked'
+                  ? 'bg-[oklch(0.70_0.21_22)] shadow-[0_0_0_3px_oklch(0.70_0.21_22_/_0.18)]'
+                  : 'bg-neutral-700',
+            )}
+          />
+          {caption.text}
         </div>
       </div>
     </MockupChrome>
