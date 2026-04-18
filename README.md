@@ -17,7 +17,7 @@ Licensed under [Apache 2.0](LICENSE). Self-host freely, including for commercial
 Prerequisites: **Node 20+**, **pnpm 9+**, **Docker**.
 
 ```bash
-git clone https://github.com/cavalry-sh/cavalry
+git clone https://github.com/zmeyer44/Cavalry
 cd cavalry
 cp .env.example .env
 pnpm install
@@ -77,11 +77,11 @@ cavalry/
 
 Three long-lived processes backed by Postgres and an S3-compatible object store:
 
-| Process | Responsibility |
-| --- | --- |
-| **apps/web** | Control plane UI, tRPC API, webhook receivers (GitHub App, Slack interactions). |
-| **apps/gateway** | Install hot path. Evaluates policy, serves cached artifacts, proxies upstream registries, exposes the MCP endpoint. |
-| **services/worker** | Background runner for git-repo syncs, audit webhook delivery, and Slack approval posts. |
+| Process             | Responsibility                                                                                                      |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| **apps/web**        | Control plane UI, tRPC API, webhook receivers (GitHub App, Slack interactions).                                     |
+| **apps/gateway**    | Install hot path. Evaluates policy, serves cached artifacts, proxies upstream registries, exposes the MCP endpoint. |
+| **services/worker** | Background runner for git-repo syncs, audit webhook delivery, and Slack approval posts.                             |
 
 A full write-up — including the policy decision algorithm, the git sync invariants (force-push detection, immutable `skill_versions`), and the approval lifecycle — lives in the [architecture docs](apps/docs/app/architecture/page.tsx).
 
@@ -104,19 +104,19 @@ Features shipped in v0.1.0:
 
 ## Scripts
 
-| Command            | Effect                                                   |
-| ------------------ | -------------------------------------------------------- |
-| `pnpm dev`         | Run web + gateway + worker + docs via Turborepo          |
-| `pnpm build`       | Production build for every workspace                     |
-| `pnpm lint`        | Lint / typecheck across the monorepo                     |
-| `pnpm typecheck`   | TypeScript check only                                    |
-| `pnpm test`        | Vitest unit suites                                       |
-| `pnpm e2e`         | Playwright end-to-end suite (builds web first)           |
-| `pnpm db:generate` | Generate a migration from schema changes                 |
-| `pnpm db:migrate`  | Apply pending migrations                                 |
-| `pnpm db:seed`     | Seed dev data                                            |
-| `pnpm db:studio`   | Open Drizzle Studio                                      |
-| `pnpm format`      | Prettier across the repo                                 |
+| Command            | Effect                                          |
+| ------------------ | ----------------------------------------------- |
+| `pnpm dev`         | Run web + gateway + worker + docs via Turborepo |
+| `pnpm build`       | Production build for every workspace            |
+| `pnpm lint`        | Lint / typecheck across the monorepo            |
+| `pnpm typecheck`   | TypeScript check only                           |
+| `pnpm test`        | Vitest unit suites                              |
+| `pnpm e2e`         | Playwright end-to-end suite (builds web first)  |
+| `pnpm db:generate` | Generate a migration from schema changes        |
+| `pnpm db:migrate`  | Apply pending migrations                        |
+| `pnpm db:seed`     | Seed dev data                                   |
+| `pnpm db:studio`   | Open Drizzle Studio                             |
+| `pnpm format`      | Prettier across the repo                        |
 
 ## Technology
 

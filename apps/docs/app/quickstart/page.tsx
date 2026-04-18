@@ -3,9 +3,8 @@ export default function Quickstart() {
     <article>
       <h1>Quickstart</h1>
       <p>
-        Run the full Cavalry stack locally in about five minutes. You'll finish with a
-        running web UI, a gateway you can install skills through, and a CLI
-        authenticated against both.
+        Run the full Cavalry stack locally in about five minutes. You'll finish with a running web
+        UI, a gateway you can install skills through, and a CLI authenticated against both.
       </p>
 
       <h2>Requirements</h2>
@@ -18,7 +17,7 @@ export default function Quickstart() {
 
       <h2>1. Clone and install</h2>
       <pre>
-        <code>{`git clone https://github.com/cavalry-sh/cavalry
+        <code>{`git clone https://github.com/zmeyer44/Cavalry
 cd cavalry
 cp .env.example .env
 pnpm install`}</code>
@@ -40,9 +39,9 @@ pnpm --filter @cavalry/worker dev    # background jobs`}</code>
 
       <h2>4. Create your org</h2>
       <p>
-        Open <a href="http://localhost:3000">http://localhost:3000</a>, sign up, and
-        pick an org slug. You'll land in the onboarding wizard — step through it (or
-        skip) to set a default policy, connect a registry, and invite teammates.
+        Open <a href="http://localhost:3000">http://localhost:3000</a>, sign up, and pick an org
+        slug. You'll land in the onboarding wizard — step through it (or skip) to set a default
+        policy, connect a registry, and invite teammates.
       </p>
 
       <h2>5. Publish and install a skill</h2>
@@ -56,24 +55,23 @@ cavalry install my-namespace/my-skill`}</code>
 
       <h2>6. Try a policy</h2>
       <p>
-        Create a <code>blocklist</code> policy in <code>/[org]/policies</code> with
-        pattern <code>tessl:*</code>, then try to install anything from Tessl. You'll
-        see the RFC 7807 problem+json response with the matching policy's name.
+        Create a <code>blocklist</code> policy in <code>/[org]/policies</code> with pattern{' '}
+        <code>tessl:*</code>, then try to install anything from Tessl. You'll see the RFC 7807
+        problem+json response with the matching policy's name.
       </p>
 
       <h2>What now?</h2>
       <ul>
         <li>
-          Connect a <a href="/git-repos">skill repo</a> so your internal skills sync
-          automatically from git.
+          Connect a <a href="/git-repos">skill repo</a> so your internal skills sync automatically
+          from git.
         </li>
         <li>
-          Set up an <a href="/siem">audit webhook</a> to forward events to Splunk or
-          Datadog.
+          Set up an <a href="/siem">audit webhook</a> to forward events to Splunk or Datadog.
         </li>
         <li>
-          Read the <a href="/architecture">architecture</a> overview to understand
-          how everything fits together.
+          Read the <a href="/architecture">architecture</a> overview to understand how everything
+          fits together.
         </li>
       </ul>
     </article>
