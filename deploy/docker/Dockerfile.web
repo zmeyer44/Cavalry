@@ -1,0 +1,44 @@
+# syntax=docker/dockerfile:1.7
+
+# Cavalry web (Next.js control plane).
+#
+# Build context must be the repo root so pnpm-workspace.yaml and all packages
+# are visible. Multi-stage to keep runtime minimal.
+
+FROM node:20-bookworm-slim AS deps
+WORKDIR /repo
+RUN corepack enable
+
+# Copy workspace manifests and install all deps (hoisted).
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json turbo.json ./
+COPY apps ./apps
+COPY packages ./packages
+COPY services ./services
+COPY tsconfig.base.json ./
+
+RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile
+
+FROM deps AS build
+WORKDIR /repo
+RUN pnpm --filter @cavalry/web build
+
+FROM node:20-bookworm-slim AS runtime
+WORKDIR /app
+RUN corepack enable
+ENV NODE_ENV=production \
+    PORT=3000
+
+# Copy the built Next.js app and the subset of deps it needs.
+COPY --from=build /repo/apps/web/.next ./apps/web/.next
+COPY --from=build /repo/apps/web/public ./apps/web/public 2>/dev/null || true
+COPY --from=build /repo/apps/web/package.json ./apps/web/
+COPY --from=build /repo/apps/web/next.config.ts ./apps/web/
+COPY --from=build /repo/node_modules ./node_modules
+COPY --from=build /repo/packages ./packages
+COPY --from=build /repo/pnpm-workspace.yaml ./
+COPY --from=build /repo/package.json ./
+COPY --from=build /repo/tsconfig.base.json ./
+
+EXPOSE 3000
+CMD ["pnpm", "--filter", "@cavalry/web", "exec", "next", "start", "--port", "3000"]

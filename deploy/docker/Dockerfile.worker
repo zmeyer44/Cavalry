@@ -1,0 +1,31 @@
+# syntax=docker/dockerfile:1.7
+
+# Cavalry worker — pg-boss consumer for git-sync + audit webhook delivery +
+# slack approval notifications.
+
+FROM node:20-bookworm-slim AS deps
+WORKDIR /repo
+RUN corepack enable
+
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json turbo.json ./
+COPY apps ./apps
+COPY packages ./packages
+COPY services ./services
+COPY tsconfig.base.json ./
+
+RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile
+
+FROM node:20-bookworm-slim AS runtime
+WORKDIR /app
+RUN corepack enable
+ENV NODE_ENV=production
+
+COPY --from=deps /repo/services/worker ./services/worker
+COPY --from=deps /repo/packages ./packages
+COPY --from=deps /repo/node_modules ./node_modules
+COPY --from=deps /repo/pnpm-workspace.yaml ./
+COPY --from=deps /repo/package.json ./
+COPY --from=deps /repo/tsconfig.base.json ./
+
+CMD ["pnpm", "--filter", "@cavalry/worker", "start"]

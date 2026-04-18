@@ -50,7 +50,7 @@ export default function SignupPage() {
         return;
       }
       const { slug: createdSlug } = (await orgRes.json()) as { slug: string };
-      router.push(`/${createdSlug}`);
+      router.push(`/${createdSlug}/onboarding`);
       router.refresh();
     } catch {
       toast.error('Something went wrong');

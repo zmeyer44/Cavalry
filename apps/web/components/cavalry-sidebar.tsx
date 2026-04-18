@@ -12,6 +12,9 @@ import {
   ShieldCheck,
   ScrollText,
   Network,
+  GitBranch,
+  ShieldAlert,
+  Webhook,
   Users,
   KeyRound,
   Building2,
@@ -136,7 +139,9 @@ export function CavalrySidebar({
   ];
   const policy: NavEntry[] = [
     { href: `${prefix}/registries`, label: 'Registries', icon: Network, key: 'registries' },
+    { href: `${prefix}/skill-repos`, label: 'Skill repos', icon: GitBranch, key: 'skill-repos' },
     { href: `${prefix}/policies`, label: 'Policies', icon: ShieldCheck, key: 'policies' },
+    { href: `${prefix}/approvals`, label: 'Approvals', icon: ShieldAlert, key: 'approvals' },
   ];
   const settings: NavEntry[] = [
     {
@@ -153,6 +158,12 @@ export function CavalrySidebar({
       label: 'API tokens',
       icon: KeyRound,
       key: 'tokens',
+    });
+    settings.push({
+      href: `${prefix}/settings/integrations`,
+      label: 'Integrations',
+      icon: Webhook,
+      key: 'integrations',
     });
   }
 

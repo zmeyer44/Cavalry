@@ -14,9 +14,11 @@
   "dependencies": {
     "@cavalry/common": "workspace:*",
     "@cavalry/database": "workspace:*",
-    "drizzle-orm": "^0.45.2"
+    "drizzle-orm": "^0.45.2",
+    "picomatch": "^4.0.2"
   },
   "devDependencies": {
+    "@types/picomatch": "^3.0.1",
     "typescript": "^5.9.3",
     "vitest": "^2.1.8"
   }

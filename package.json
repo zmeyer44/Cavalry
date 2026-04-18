@@ -2,6 +2,7 @@
   "name": "cavalry",
   "private": true,
   "description": "Governance, observability, and control for AI agent context at enterprise scale.",
+  "license": "Apache-2.0",
   "workspaces": [
     "apps/*",
     "services/*",

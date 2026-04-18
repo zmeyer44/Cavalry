@@ -1,23 +1,25 @@
 import Link from 'next/link';
 import { Logo } from '@/assets/logo';
 
-const COLS = [
+const DOCS_URL = process.env.NEXT_PUBLIC_CAVALRY_DOCS_URL as string;
+
+const COLS: { title: string; items: { label: string; href: string; external?: boolean }[] }[] = [
   {
     title: 'Product',
     items: [
       { label: 'Features', href: '#features' },
       { label: 'Self-host', href: '#self-host' },
-      { label: 'Roadmap', href: '/docs/PRD' },
-      { label: 'Changelog', href: '/docs/changelog' },
+      { label: 'Quickstart', href: `${DOCS_URL}/quickstart`, external: true },
+      { label: 'Policies', href: `${DOCS_URL}/policies`, external: true },
     ],
   },
   {
     title: 'Resources',
     items: [
-      { label: 'Docs', href: '/docs' },
-      { label: 'CLI', href: '/docs/cli' },
-      { label: 'Architecture', href: '/docs/architecture' },
-      { label: 'ADRs', href: '/docs/decisions' },
+      { label: 'Docs', href: DOCS_URL, external: true },
+      { label: 'CLI', href: `${DOCS_URL}/cli`, external: true },
+      { label: 'Architecture', href: `${DOCS_URL}/architecture`, external: true },
+      { label: 'MCP', href: `${DOCS_URL}/mcp`, external: true },
     ],
   },
   {
@@ -58,6 +60,7 @@ export function Footer() {
                   <li key={i.label}>
                     <Link
                       href={i.href}
+                      {...(i.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
                       className="text-stone-800 transition-colors hover:text-primary"
                     >
                       {i.label}
@@ -70,7 +73,7 @@ export function Footer() {
         </div>
         <div className="h-px bg-stone-100" />
         <div className="flex flex-col justify-between gap-3 py-6 font-mono text-[11px] uppercase tracking-[0.14em] text-stone-500 md:flex-row">
-          <span>© 2026 Cavalry · BSL 1.1 → Apache 2.0 (2029)</span>
+          <span>© 2026 Cavalry · Apache 2.0</span>
           <span>cavalry.sh</span>
         </div>
       </div>

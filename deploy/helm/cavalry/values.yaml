@@ -1,0 +1,131 @@
+# Default values for the Cavalry Helm chart.
+#
+# This is a basic chart per PRD M6. Production hardening (PodDisruptionBudgets,
+# HPA, network policies, separate read/write DB users) ships in v1+.
+
+image:
+  registry: ghcr.io/cavalry-sh
+  pullPolicy: IfNotPresent
+  # Overridden per-component below if a component needs a pinned tag.
+  tag: "0.1.0"
+
+# ─── web (Next.js control plane) ─────────────────────────────────────────────
+web:
+  replicaCount: 2
+  image:
+    repository: web
+    tag: ""                 # falls back to image.tag
+  service:
+    type: ClusterIP
+    port: 3000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  # Additional env vars merged on top of the shared config+secret below.
+  extraEnv: {}
+
+# ─── gateway (Hono proxy, hot path) ──────────────────────────────────────────
+gateway:
+  replicaCount: 3
+  image:
+    repository: gateway
+    tag: ""
+  service:
+    type: ClusterIP
+    port: 3001
+  resources:
+    requests:
+      cpu: 100m
+      memory: 192Mi
+    limits:
+      cpu: 500m
+      memory: 384Mi
+  extraEnv: {}
+
+# ─── worker (pg-boss consumer) ───────────────────────────────────────────────
+worker:
+  replicaCount: 1
+  image:
+    repository: worker
+    tag: ""
+  resources:
+    requests:
+      cpu: 100m
+      memory: 192Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  extraEnv: {}
+
+# ─── Ingress ─────────────────────────────────────────────────────────────────
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  webHost: cavalry.example.com
+  gatewayHost: gateway.cavalry.example.com
+  tls: []                   # [{ secretName: cavalry-tls, hosts: [cavalry.example.com] }]
+
+# ─── Config ──────────────────────────────────────────────────────────────────
+config:
+  env: "production"
+  logLevel: "info"
+  # Public URLs used for OAuth callbacks and webhook receivers. Must be
+  # reachable from GitHub/Slack when those integrations are enabled.
+  webUrl: "https://cavalry.example.com"
+  gatewayUrl: "https://gateway.cavalry.example.com"
+  storage:
+    provider: s3           # local | s3 | r2
+    s3Bucket: ""
+    s3Region: "us-east-1"
+    s3Endpoint: ""         # blank = AWS; set for R2/MinIO
+  sync:
+    reconcileIntervalSeconds: 900
+    cloneMaxSizeMb: 500
+    artifactMaxSizeMb: 50
+  gateway:
+    cacheTtlSeconds: 3600
+    maxArtifactSizeBytes: 52428800
+
+# ─── Secrets (create externally OR use `existingSecret`) ─────────────────────
+secret:
+  # If existingSecret is set, Cavalry does NOT create its own Secret and instead
+  # references yours. The secret must carry every key listed under `keys` below.
+  existingSecret: ""
+  keys:
+    DATABASE_URL: "postgres://cavalry:cavalry@postgres:5432/cavalry"
+    BETTER_AUTH_SECRET: "please-rotate-this-please-rotate-this"
+    CAVALRY_ENCRYPTION_KEY: "please-rotate-this-please-rotate-this"
+    AWS_ACCESS_KEY_ID: ""
+    AWS_SECRET_ACCESS_KEY: ""
+    # Optional integrations — leave blank to disable.
+    CAVALRY_GITHUB_APP_ID: ""
+    CAVALRY_GITHUB_APP_PRIVATE_KEY: ""
+    CAVALRY_GITHUB_APP_WEBHOOK_SECRET: ""
+    CAVALRY_GITHUB_APP_CLIENT_ID: ""
+    CAVALRY_GITHUB_APP_CLIENT_SECRET: ""
+    CAVALRY_GITHUB_APP_SLUG: ""
+    CAVALRY_SLACK_CLIENT_ID: ""
+    CAVALRY_SLACK_CLIENT_SECRET: ""
+    CAVALRY_SLACK_SIGNING_SECRET: ""
+
+# ─── Database ───────────────────────────────────────────────────────────────
+# Postgres is a required external dependency. This chart does NOT bundle one;
+# point DATABASE_URL at your managed Postgres.
+
+# ─── Migrations ─────────────────────────────────────────────────────────────
+# A pre-install/pre-upgrade Job runs `pnpm db:migrate` against DATABASE_URL.
+migrationJob:
+  enabled: true
+  backoffLimit: 3
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi

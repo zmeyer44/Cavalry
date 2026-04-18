@@ -7,7 +7,34 @@ import { Readable } from 'node:stream';
 import { extract as tarExtract } from 'tar';
 import { parseSkillRef } from '@cavalry/skill-format';
 import { resolveConfig } from '../config';
-import { GatewayClient } from '../client';
+import { GatewayClient, type PolicyViolationError } from '../client';
+
+function isPolicyError(err: unknown): err is PolicyViolationError {
+  return (
+    err instanceof Error &&
+    'kind' in err &&
+    ((err as PolicyViolationError).kind === 'policy_violation' ||
+      (err as PolicyViolationError).kind === 'approval_required')
+  );
+}
+
+function reportPolicyError(refLabel: string, err: PolicyViolationError): never {
+  if (err.kind === 'approval_required') {
+    const suffix = err.approvalId ? ` (id ${err.approvalId})` : '';
+    console.error(pc.yellow(`⏳ ${refLabel} is pending approval${suffix}`));
+    console.error(pc.yellow(`  policy "${err.policyName}" — ${err.reason}`));
+    console.error(
+      pc.dim(
+        '  once approved in the Cavalry UI, re-run this command to complete the install',
+      ),
+    );
+    process.exit(3);
+  }
+  console.error(pc.red(`✗ Blocked by policy "${err.policyName}"`));
+  console.error(pc.red(`  ${err.reason}`));
+  console.error(pc.dim('  run `cavalry policy list` to see active rules'));
+  process.exit(2);
+}
 
 export async function install(
   ref: string,
@@ -18,12 +45,6 @@ export async function install(
     console.error(pc.red(`Invalid skill reference: ${ref}`));
     process.exit(1);
   }
-  if (parsed.registry && parsed.registry !== 'internal') {
-    console.error(
-      pc.red(`Upstream registries not supported yet (got "${parsed.registry}"). M3 adds this.`),
-    );
-    process.exit(1);
-  }
 
   const cfg = await resolveConfig(opts);
   if (!cfg.token) {
@@ -32,9 +53,12 @@ export async function install(
   }
   const client = new GatewayClient({ url: cfg.url, token: cfg.token });
 
+  const isUpstream = !!parsed.registry;
   let version = parsed.version;
   if (!version || version === 'latest') {
-    version = await client.resolveLatest(parsed.namespace, parsed.name);
+    version = isUpstream
+      ? await client.resolveProxiedLatest(parsed.registry!, parsed.namespace, parsed.name)
+      : await client.resolveLatest(parsed.namespace, parsed.name);
   }
 
   const outDir = resolve(
@@ -43,11 +67,23 @@ export async function install(
   );
   await mkdir(outDir, { recursive: true });
 
-  console.log(
-    pc.dim(`fetching ${parsed.namespace}/${parsed.name}@${version} → ${outDir}…`),
-  );
+  const refLabel = isUpstream
+    ? `${parsed.registry}:${parsed.namespace}/${parsed.name}@${version}`
+    : `${parsed.namespace}/${parsed.name}@${version}`;
+  console.log(pc.dim(`fetching ${refLabel} → ${outDir}…`));
 
-  const { stream, hash, size } = await client.fetchArtifact(parsed.namespace, parsed.name, version);
+  let stream: Readable, hash: string, size: number;
+  try {
+    const got = isUpstream
+      ? await client.fetchProxiedArtifact(parsed.registry!, parsed.namespace, parsed.name, version)
+      : await client.fetchArtifact(parsed.namespace, parsed.name, version);
+    stream = got.stream;
+    hash = got.hash;
+    size = got.size;
+  } catch (err) {
+    if (isPolicyError(err)) reportPolicyError(refLabel, err);
+    throw err;
+  }
 
   // Verify hash while extracting
   const hasher = createHash('sha256');
@@ -75,8 +111,6 @@ export async function install(
   }
 
   console.log(
-    pc.green(
-      `✓ Installed ${parsed.namespace}/${parsed.name}@${version} (${(bytes / 1024).toFixed(1)} KB)`,
-    ),
+    pc.green(`✓ Installed ${refLabel} (${(bytes / 1024).toFixed(1)} KB)`),
   );
 }

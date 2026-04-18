@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
 import { CellGrid } from '@/components/cell-grid';
 
+const GITHUB_URL = process.env.NEXT_PUBLIC_CAVALRY_GITHUB_URL as string;
 export function Hero() {
   return (
     <section className="relative overflow-hidden bg-white">
@@ -16,7 +17,8 @@ export function Hero() {
       <div className="relative mx-auto max-w-[1280px] px-6 md:px-10">
         <div className="pt-10 md:pt-16">
           <Link
-            href="/docs/PRD"
+            href={GITHUB_URL}
+            target="_blank"
             className="group/badge relative overflow-hidden inline-flex items-center h-[20px] gap-1.5 rounded-r-[20px] hover:rounded-r-none font-display bg-primary/10 px-2.5 py-1 pl-3.5 text-[12.5px] leading-none text-foreground hover:text-white transition-all"
           >
             <div className="z-0 absolute inset-y-0 left-0 w-1 bg-primary transition-all group-hover/badge:w-full" />

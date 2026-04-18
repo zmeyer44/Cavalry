@@ -3,8 +3,11 @@ import { CtaButton } from '@/components/marketing/cta-button';
 import { Eyebrow, SectionLead, SectionTitle } from './_shared';
 import { cn } from '@/lib/utils';
 
+const DOCS_URL = process.env.NEXT_PUBLIC_CAVALRY_DOCS_URL as string;
+const GITHUB_URL = process.env.NEXT_PUBLIC_CAVALRY_GITHUB_URL as string;
+
 const META = [
-  { label: 'License', value: 'BSL 1.1 → Apache 2.0' },
+  { label: 'License', value: 'Apache 2.0' },
   { label: 'Footprint', value: 'Postgres + S3' },
   { label: 'Deploy', value: 'docker-compose · Helm' },
 ];
@@ -38,16 +41,20 @@ export function SelfHost() {
               </h2>
             </div>
             <SectionLead>
-              Cavalry is licensed under the Business Source License 1.1, with a three-year
-              conversion to Apache 2.0. Self-host freely; a hosted competitive service is the only
-              restriction. Enterprise features land in the commercial tier.
+              Cavalry is licensed under the Apache License 2.0. Self-host freely, including for
+              commercial use. Enterprise features land in the commercial tier.
             </SectionLead>
             <div className="mt-10 flex flex-wrap gap-3">
-              <CtaButton href="/docs" variant="primary-light" icon={ArrowRight}>
+              <CtaButton
+                href={`${DOCS_URL}/quickstart`}
+                variant="primary-light"
+                icon={ArrowRight}
+                external
+              >
                 Deployment guide
               </CtaButton>
               <CtaButton
-                href="https://github.com"
+                href={GITHUB_URL}
                 variant="secondary-light"
                 icon={ArrowUpRight}
                 external

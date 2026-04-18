@@ -35,6 +35,37 @@ describe('parseSkillRef', () => {
   it('rejects missing namespace', () => {
     expect(parseSkillRef('/foo')).toBeNull();
   });
+
+  it('parses URL-style scheme', () => {
+    expect(parseSkillRef('tessl://demo/hello@1.0.0')).toEqual({
+      registry: 'tessl',
+      namespace: 'demo',
+      name: 'hello',
+      version: '1.0.0',
+    });
+  });
+
+  it('parses npm-scope-style', () => {
+    expect(parseSkillRef('@tessl/demo/hello@1.0.0')).toEqual({
+      registry: 'tessl',
+      namespace: 'demo',
+      name: 'hello',
+      version: '1.0.0',
+    });
+  });
+
+  it('treats internal: as no registry', () => {
+    expect(parseSkillRef('internal:acme/kafka')).toEqual({
+      registry: null,
+      namespace: 'acme',
+      name: 'kafka',
+      version: null,
+    });
+  });
+
+  it('rejects bad registry name in scope form', () => {
+    expect(parseSkillRef('@Bad_Name/demo/hello')).toBeNull();
+  });
 });
 
 describe('formatSkillRef', () => {

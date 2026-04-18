@@ -12,6 +12,7 @@ const nextConfig: NextConfig = {
     '@cavalry/database',
     '@cavalry/auth',
     '@cavalry/audit',
+    '@cavalry/registry-upstream',
     '@cavalry/skill-format',
   ],
   serverExternalPackages: ['pg'],

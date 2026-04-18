@@ -1,0 +1,17 @@
+apiVersion: v2
+name: cavalry
+description: Governance, observability, and control for AI agent context at enterprise scale.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+home: https://cavalry.sh
+sources:
+  - https://github.com/cavalry-sh/cavalry
+maintainers:
+  - name: Cavalry
+    email: hello@cavalry.sh
+keywords:
+  - ai
+  - governance
+  - skills
+  - mcp
