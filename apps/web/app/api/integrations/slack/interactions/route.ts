@@ -4,6 +4,7 @@ import {
   getDb,
   installs,
   policies,
+  policyEvaluations,
   slackIntegrations,
 } from '@cavalry/database';
 import {
@@ -151,13 +152,19 @@ export async function POST(req: Request): Promise<Response> {
       .from(installs)
       .where(eq(installs.id, updated.installId))
       .limit(1);
-    const [policy] = approval.installId
-      ? await db
-          .select({ name: policies.name })
-          .from(policies)
-          .innerJoin(installs, eq(installs.id, approval.installId))
-          .limit(1)
-      : [];
+    // Resolve the policy that triggered the approval via policy_evaluations —
+    // NOT a cross-join on policies, which returns an arbitrary row.
+    const [policy] = await db
+      .select({ name: policies.name })
+      .from(policyEvaluations)
+      .innerJoin(policies, eq(policies.id, policyEvaluations.policyId))
+      .where(
+        and(
+          eq(policyEvaluations.installId, approval.installId),
+          eq(policyEvaluations.result, 'require_approval'),
+        ),
+      )
+      .limit(1);
 
     const token = decryptBotToken(integration.botToken);
     const blocks = approvalDecidedBlocks({

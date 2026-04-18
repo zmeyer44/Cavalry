@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, sql } from 'drizzle-orm';
 import {
   policies as policiesTable,
   skills,
@@ -189,23 +189,40 @@ async function listSkillsTool(
   const limit = Math.min(200, Math.max(1, Number(args.limit) || 50));
   const query = typeof args.query === 'string' ? args.query.toLowerCase() : '';
 
-  const rows = await auth.db
-    .select({
-      id: skills.id,
-      namespace: skills.namespace,
-      name: skills.name,
-      description: skills.description,
-      status: skills.status,
-    })
-    .from(skills)
-    .where(and(eq(skills.orgId, auth.orgId), eq(skills.status, 'active')))
-    .orderBy(skills.namespace, skills.name)
-    .limit(500);
+  // Single round-trip: skills joined with their latest version via
+  // `DISTINCT ON (skill_id)` ordered by published_at DESC. Replaces the prior
+  // N+1 lookup inside the filter loop.
+  const rows = await auth.db.execute<{
+    id: string;
+    namespace: string;
+    name: string;
+    description: string | null;
+    latest_version: string | null;
+  }>(sql`
+    SELECT
+      s.id,
+      s.namespace,
+      s.name,
+      s.description,
+      latest.version AS latest_version
+    FROM ${skills} s
+    LEFT JOIN LATERAL (
+      SELECT sv.version
+      FROM ${skillVersions} sv
+      WHERE sv.skill_id = s.id
+      ORDER BY sv.published_at DESC
+      LIMIT 1
+    ) latest ON true
+    WHERE s.org_id = ${auth.orgId}
+      AND s.status = 'active'
+    ORDER BY s.namespace, s.name
+    LIMIT 500
+  `);
 
   const loadedPolicies = await loadPolicies(auth);
   const filtered: PolicyFilteredSkill[] = [];
 
-  for (const row of rows) {
+  for (const row of rows.rows) {
     if (filtered.length >= limit) break;
     if (
       query &&
@@ -230,21 +247,13 @@ async function listSkillsTool(
     });
     if (decision.decision.type === 'deny') continue;
 
-    // Look up the latest version for display.
-    const [latest] = await auth.db
-      .select({ version: skillVersions.version })
-      .from(skillVersions)
-      .where(eq(skillVersions.skillId, row.id))
-      .orderBy(desc(skillVersions.publishedAt))
-      .limit(1);
-
     filtered.push({
       ref,
       namespace: row.namespace,
       name: row.name,
       source: 'internal',
       description: row.description,
-      latestVersion: latest?.version ?? null,
+      latestVersion: row.latest_version,
     });
   }
 

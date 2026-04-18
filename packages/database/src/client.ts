@@ -6,7 +6,7 @@ const { Pool } = pg;
 
 let pool: pg.Pool | null = null;
 
-export function getDb() {
+function ensurePool(): pg.Pool {
   if (!pool) {
     if (!process.env.DATABASE_URL) {
       throw new Error('DATABASE_URL is not set');
@@ -17,7 +17,20 @@ export function getDb() {
       idleTimeoutMillis: 10_000,
     });
   }
-  return drizzle(pool, { schema, casing: 'snake_case' });
+  return pool;
+}
+
+export function getDb() {
+  return drizzle(ensurePool(), { schema, casing: 'snake_case' });
+}
+
+/**
+ * Returns the underlying pg Pool. Use this when a feature needs a dedicated
+ * connection across multiple queries — notably advisory locks, which are
+ * session-scoped and must acquire + release on the same client.
+ */
+export function getPool(): pg.Pool {
+  return ensurePool();
 }
 
 export type Database = ReturnType<typeof getDb>;

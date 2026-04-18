@@ -639,14 +639,12 @@ export async function listStaleRepos(params: {
   staleAfterSeconds: number;
 }): Promise<Array<{ id: string }>> {
   const db = getDb();
-  const staleBoundary = sql.raw(
-    `now() - interval '${Math.floor(params.staleAfterSeconds)} seconds'`,
-  );
+  const seconds = Math.floor(params.staleAfterSeconds);
   const rows = await db
     .select({ id: skillRepos.id })
     .from(skillRepos)
     .where(
-      sql`${skillRepos.enabled} = true AND (${skillRepos.lastSyncedAt} IS NULL OR ${skillRepos.lastSyncedAt} < ${staleBoundary})`,
+      sql`${skillRepos.enabled} = true AND (${skillRepos.lastSyncedAt} IS NULL OR ${skillRepos.lastSyncedAt} < now() - (${seconds} * interval '1 second'))`,
     );
   return rows;
 }

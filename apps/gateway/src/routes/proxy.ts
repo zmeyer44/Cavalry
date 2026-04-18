@@ -22,6 +22,7 @@ import { requireToken, requireScope } from '../auth';
 import { config } from '../config';
 import { logger } from '../logger';
 import { enforcePolicy, recordAllowedInstall } from '../pipeline/policy';
+import { resolveWorkspaceHeader } from '../pipeline/workspace';
 
 function sourceFromRegistryType(type: UpstreamRegistry['type']): SkillSource {
   switch (type) {
@@ -217,7 +218,13 @@ proxyRouter.get(
     const ref = `${registryName}:${namespace}/${name}@${version}`;
     const userAgent = c.req.header('user-agent') ?? null;
     const projectIdentifier = c.req.header('x-cavalry-project') ?? null;
-    const workspaceHdr = c.req.header('x-cavalry-workspace') ?? null;
+    // Workspace header is caller-supplied; resolve it against the authed org
+    // so a token can't claim a workspace in a different tenant.
+    const workspaceHdr = await resolveWorkspaceHeader({
+      db: auth.db,
+      orgId: auth.orgId,
+      header: c.req.header('x-cavalry-workspace') ?? null,
+    });
     const storage = getStorageProvider();
 
     // Evaluate policy before touching upstream or storage. Denials do not

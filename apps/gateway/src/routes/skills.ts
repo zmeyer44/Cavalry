@@ -12,6 +12,7 @@ import { requireToken, requireScope } from '../auth';
 import { config } from '../config';
 import { logger } from '../logger';
 import { enforcePolicy, recordAllowedInstall } from '../pipeline/policy';
+import { resolveWorkspaceHeader } from '../pipeline/workspace';
 
 export const skillsRouter = new Hono();
 
@@ -116,7 +117,14 @@ skillsRouter.get(
 
     const userAgent = c.req.header('user-agent') ?? null;
     const projectIdentifier = c.req.header('x-cavalry-project') ?? null;
-    const workspaceHdr = c.req.header('x-cavalry-workspace') ?? null;
+    // Workspace header is caller-supplied; resolve it against the authed org
+    // so a token can't claim a workspace in a different tenant. Invalid or
+    // cross-org values are silently dropped to null.
+    const workspaceHdr = await resolveWorkspaceHeader({
+      db: auth.db,
+      orgId: auth.orgId,
+      header: c.req.header('x-cavalry-workspace') ?? null,
+    });
     // Wire ref stays `namespace/name@version` for backward compat (the CLI
     // displays this verbatim). The policy context carries a normalized
     // `internal:` prefix separately so patterns can target internal skills.

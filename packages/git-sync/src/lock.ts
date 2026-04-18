@@ -1,15 +1,16 @@
 import { createHash } from 'node:crypto';
-import { sql } from 'drizzle-orm';
-import { getDb } from '@cavalry/database';
+import { getPool } from '@cavalry/database';
 
 /**
- * Postgres advisory locks are keyed by a pair of 32-bit integers. We derive
- * the pair from a sha256 of the skill_repo_id so the keyspace is evenly
- * distributed and stable.
+ * Postgres advisory locks are session-scoped — `pg_try_advisory_lock` and
+ * `pg_advisory_unlock` MUST run on the same underlying connection. With a
+ * connection pool, acquiring via `db.execute()` and releasing via another
+ * `db.execute()` can easily land on different clients, leaving the lock
+ * permanently held and blocking every future sync for that repo.
  *
- * We use xact-level locks (pg_advisory_xact_lock) which would require a
- * transaction wrapper; for sync jobs we need the lock across multiple TX, so
- * use the session-level pg_try_advisory_lock + pg_advisory_unlock.
+ * To avoid that, we lease a dedicated pg client from the pool for the
+ * lifetime of the lock. Acquire + release happen on the same client; the
+ * client is returned to the pool as part of release.
  */
 
 function keyPairFor(skillRepoId: string): [number, number] {
@@ -20,20 +21,36 @@ function keyPairFor(skillRepoId: string): [number, number] {
 }
 
 /**
- * Try to acquire an advisory lock for this skill repo. Returns a release
- * function on success, or null if another worker holds the lock.
+ * Try to acquire a session-level advisory lock for this skill repo. Returns a
+ * release function on success, or null if another worker holds the lock.
+ * The release function always returns the underlying connection to the pool,
+ * even when the unlock query fails.
  */
 export async function acquireSyncLock(
   skillRepoId: string,
 ): Promise<(() => Promise<void>) | null> {
-  const db = getDb();
   const [a, b] = keyPairFor(skillRepoId);
-  const result = await db.execute<{ acquired: boolean }>(
-    sql`SELECT pg_try_advisory_lock(${a}, ${b}) AS acquired`,
-  );
-  const acquired = result.rows[0]?.acquired === true;
-  if (!acquired) return null;
+  const client = await getPool().connect();
+  try {
+    const result = await client.query<{ acquired: boolean }>(
+      'SELECT pg_try_advisory_lock($1, $2) AS acquired',
+      [a, b],
+    );
+    const acquired = result.rows[0]?.acquired === true;
+    if (!acquired) {
+      client.release();
+      return null;
+    }
+  } catch (err) {
+    client.release(err instanceof Error ? err : new Error(String(err)));
+    throw err;
+  }
+
   return async () => {
-    await db.execute(sql`SELECT pg_advisory_unlock(${a}, ${b})`);
+    try {
+      await client.query('SELECT pg_advisory_unlock($1, $2)', [a, b]);
+    } finally {
+      client.release();
+    }
   };
 }

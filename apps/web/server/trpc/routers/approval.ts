@@ -250,7 +250,9 @@ export const approvalRouter = router({
           decidedAt: new Date(),
           reason: input.reason ?? null,
         })
-        .where(eq(approvals.id, input.id))
+        .where(
+          and(eq(approvals.id, input.id), eq(approvals.orgId, ctx.org.id)),
+        )
         .returning();
       if (!updated) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
 
