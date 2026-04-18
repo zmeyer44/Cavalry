@@ -3,6 +3,8 @@ import { CellGrid } from '@/components/cell-grid';
 import { CtaButton } from '@/components/marketing/cta-button';
 import { Eyebrow } from './_shared';
 
+const DOCS_URL = process.env.NEXT_PUBLIC_CAVALRY_DOCS_URL as string;
+
 export function CTA() {
   return (
     <section className="relative overflow-hidden bg-neutral-950 text-white">
@@ -44,7 +46,7 @@ export function CTA() {
               <CtaButton href="/signup" variant="primary-dark" icon={ArrowRight}>
                 Get started
               </CtaButton>
-              <CtaButton href="/docs" variant="secondary-dark">
+              <CtaButton href={DOCS_URL} variant="secondary-dark" external>
                 Read the docs
               </CtaButton>
             </div>

@@ -3,6 +3,9 @@ import { CtaButton } from '@/components/marketing/cta-button';
 import { Eyebrow, SectionLead, SectionTitle } from './_shared';
 import { cn } from '@/lib/utils';
 
+const DOCS_URL = process.env.NEXT_PUBLIC_CAVALRY_DOCS_URL as string;
+const GITHUB_URL = process.env.NEXT_PUBLIC_CAVALRY_GITHUB_URL as string;
+
 const META = [
   { label: 'License', value: 'Apache 2.0' },
   { label: 'Footprint', value: 'Postgres + S3' },
@@ -42,11 +45,16 @@ export function SelfHost() {
               commercial use. Enterprise features land in the commercial tier.
             </SectionLead>
             <div className="mt-10 flex flex-wrap gap-3">
-              <CtaButton href="/docs" variant="primary-light" icon={ArrowRight}>
+              <CtaButton
+                href={`${DOCS_URL}/quickstart`}
+                variant="primary-light"
+                icon={ArrowRight}
+                external
+              >
                 Deployment guide
               </CtaButton>
               <CtaButton
-                href="https://github.com"
+                href={GITHUB_URL}
                 variant="secondary-light"
                 icon={ArrowUpRight}
                 external
