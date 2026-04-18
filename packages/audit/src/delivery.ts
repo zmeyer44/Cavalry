@@ -15,6 +15,7 @@ import {
 
 const MAX_ATTEMPTS = 5;
 const BACKOFF_MS = [0, 30_000, 2 * 60_000, 10 * 60_000, 60 * 60_000];
+const DELIVERY_TIMEOUT_MS = 10_000;
 
 /** Test-only injection point. */
 let fetchImpl: typeof fetch = globalThis.fetch;
@@ -164,6 +165,8 @@ export async function deliverPending(opts: ScanOptions): Promise<{ delivered: nu
     const payload = buildWebhookPayload(event, row.webhook.format as WebhookFormat);
     const signature = signPayload(payload.body, secret);
 
+    const ac = new AbortController();
+    const timer = setTimeout(() => ac.abort(), DELIVERY_TIMEOUT_MS);
     try {
       const res = await fetchImpl(row.webhook.url, {
         method: 'POST',
@@ -175,6 +178,7 @@ export async function deliverPending(opts: ScanOptions): Promise<{ delivered: nu
           'x-cavalry-event-action': row.event.action,
         },
         body: payload.body,
+        signal: ac.signal,
       });
 
       if (res.ok) {
@@ -208,10 +212,15 @@ export async function deliverPending(opts: ScanOptions): Promise<{ delivered: nu
       });
     } catch (err) {
       failed += 1;
+      const isAbort = err instanceof Error && err.name === 'AbortError';
       await handleFailure({
         row,
-        errorMessage: err instanceof Error ? err.message : String(err),
+        errorMessage: isAbort
+          ? `request timed out after ${DELIVERY_TIMEOUT_MS}ms`
+          : err instanceof Error ? err.message : String(err),
       });
+    } finally {
+      clearTimeout(timer);
     }
   }
 

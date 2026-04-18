@@ -178,9 +178,16 @@ async function handleRequireApproval(args: {
   };
   evaluations: ReturnType<typeof evaluate>['evaluations'];
 }): Promise<PolicyResult> {
-  // Look up the most recent approval for this skill_ref in this org.
-  // Approvals are linked to installs; we match on installs.skill_ref and
-  // ignore expired pending requests so a stale 24h-old request doesn't wedge.
+  // Look up the most recent approval for this (skill_ref, workspace) in this
+  // org. Approvals are linked to installs; we match on installs.skill_ref and
+  // installs.workspace_id so an approval granted in workspace A cannot silently
+  // satisfy workspace B's require_approval policy. A null workspaceId on the
+  // incoming request only matches approvals from null-workspace installs.
+  // Expired pending requests are ignored so a stale 24h request doesn't wedge.
+  const workspaceMatch = args.install.workspaceId
+    ? eq(installs.workspaceId, args.install.workspaceId)
+    : isNull(installs.workspaceId);
+
   const latest = await args.auth.db
     .select({
       id: approvals.id,
@@ -196,6 +203,7 @@ async function handleRequireApproval(args: {
       and(
         eq(approvals.orgId, args.auth.orgId),
         eq(installs.skillRef, args.install.skillRef),
+        workspaceMatch,
       ),
     )
     .orderBy(desc(approvals.createdAt))
