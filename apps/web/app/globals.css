@@ -279,3 +279,40 @@
 .cav-bar-drift {
   animation: cav-bar-drift 6s ease-in-out infinite;
 }
+
+/* Trust-bar slot cross-fade — incoming logo */
+@keyframes cav-slot-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.cav-slot-in {
+  animation: cav-slot-in 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Trust-bar slot cross-fade — outgoing logo */
+@keyframes cav-slot-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+.cav-slot-out {
+  animation: cav-slot-out 380ms cubic-bezier(0.55, 0, 0.68, 0.35) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cav-slot-in,
+  .cav-slot-out {
+    animation: none;
+  }
+}
