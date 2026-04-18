@@ -1,15 +1,17 @@
 import { cn } from '@/lib/utils';
 import { Eyebrow } from './_shared';
 
-const TOOLS = [
-  'Claude Code',
-  'Cursor',
-  'Codex',
-  'Aider',
-  'Windsurf',
-  'Tessl',
-  'GitHub',
-  'MCP',
+type Tool = { name: string; logo: string };
+
+const TOOLS: Tool[] = [
+  { name: 'Claude Code', logo: '/assets/company-logos/claude-code.svg' },
+  { name: 'Cursor', logo: '/assets/company-logos/cursor.svg' },
+  { name: 'Codex', logo: '/assets/company-logos/codex.svg' },
+  { name: 'Aider', logo: '/assets/company-logos/aider.svg' },
+  { name: 'Windsurf', logo: '/assets/company-logos/windsurf.svg' },
+  { name: 'Tessl', logo: '/assets/company-logos/tessl.svg' },
+  { name: 'GitHub', logo: '/assets/company-logos/github.svg' },
+  { name: 'MCP', logo: '/assets/company-logos/mcp.svg' },
 ];
 
 export function Integrations() {
@@ -27,9 +29,9 @@ export function Integrations() {
           <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8">
             {TOOLS.map((t, i) => (
               <div
-                key={t}
+                key={t.name}
                 className={cn(
-                  'group relative flex h-24 items-center justify-center transition-colors hover:bg-stone-50/70 md:h-28',
+                  'group relative flex h-28 flex-col items-center justify-center gap-3 px-3 transition-colors hover:bg-stone-50/70 md:h-32',
                   // verticals (col dividers) — skip first of each row
                   i % 2 !== 0 && 'border-l border-stone-100 sm:border-l-0',
                   i % 4 !== 0 && 'sm:border-l sm:border-stone-100 md:border-l-0',
@@ -43,8 +45,17 @@ export function Integrations() {
                   aria-hidden
                   className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
                 />
-                <span className="font-mono text-[12.5px] tracking-[0.02em] text-stone-700 transition-colors group-hover:text-stone-950 md:text-[13px]">
-                  {t}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={t.logo}
+                  alt=""
+                  aria-hidden="true"
+                  loading="lazy"
+                  decoding="async"
+                  className="h-7 w-auto max-w-[96px] object-contain opacity-70 grayscale transition duration-200 group-hover:opacity-100 group-hover:grayscale-0"
+                />
+                <span className="font-mono text-[11.5px] tracking-[0.04em] text-stone-500 transition-colors group-hover:text-stone-950 md:text-[12px]">
+                  {t.name}
                 </span>
               </div>
             ))}
