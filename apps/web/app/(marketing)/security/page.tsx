@@ -10,7 +10,6 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { MarketingShell } from '@/components/marketing/marketing-shell';
 import { Eyebrow, SectionLead, SectionTitle } from '@/components/marketing/sections/_shared';
 
 const GITHUB_URL = process.env.NEXT_PUBLIC_CAVALRY_GITHUB_URL as string;
@@ -97,7 +96,7 @@ const DATA_MODEL = [
 
 export default function SecurityPage() {
   return (
-    <MarketingShell>
+    <>
       <section className="relative overflow-hidden bg-white">
         <div
           aria-hidden
@@ -241,6 +240,6 @@ export default function SecurityPage() {
           </dl>
         </div>
       </section>
-    </MarketingShell>
+    </>
   );
 }

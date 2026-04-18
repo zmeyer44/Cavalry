@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowUpRight, Check, X } from 'lucide-react';
-import { MarketingShell } from '@/components/marketing/marketing-shell';
 import { Eyebrow, SectionLead, SectionTitle } from '@/components/marketing/sections/_shared';
 
 const GITHUB_URL = process.env.NEXT_PUBLIC_CAVALRY_GITHUB_URL as string;
@@ -43,7 +42,7 @@ const TRADEMARK = [
 
 export default function LicensePage() {
   return (
-    <MarketingShell>
+    <>
       <section className="relative overflow-hidden bg-white">
         <div
           aria-hidden
@@ -191,6 +190,6 @@ export default function LicensePage() {
           </div>
         </div>
       </section>
-    </MarketingShell>
+    </>
   );
 }

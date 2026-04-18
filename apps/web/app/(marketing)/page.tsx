@@ -3,20 +3,18 @@ import { headers } from 'next/headers';
 import { eq } from 'drizzle-orm';
 import { auth } from '@cavalry/auth/server';
 import { getDb, memberships, organizations } from '@cavalry/database';
-import { TopNav } from '@/components/marketing/top-nav';
 import { Hero } from '@/components/marketing/hero';
 import {
-  TrustBar,
-  Stats,
-  Problem,
-  HowItWorks,
-  Features,
-  Personas,
   Comparison,
-  SelfHost,
-  Integrations,
   CTA,
-  Footer,
+  Features,
+  HowItWorks,
+  Integrations,
+  Personas,
+  Problem,
+  SelfHost,
+  Stats,
+  TrustBar,
 } from '@/components/marketing/sections';
 
 export default async function LandingPage() {
@@ -33,8 +31,7 @@ export default async function LandingPage() {
   }
 
   return (
-    <div className="light min-h-screen bg-white text-stone-900">
-      <TopNav />
+    <>
       <Hero />
       <TrustBar />
       <HowItWorks />
@@ -46,7 +43,6 @@ export default async function LandingPage() {
       <SelfHost />
       <Integrations />
       <CTA />
-      <Footer />
-    </div>
+    </>
   );
 }

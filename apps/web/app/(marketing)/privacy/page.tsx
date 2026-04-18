@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Check, X } from 'lucide-react';
-import { MarketingShell } from '@/components/marketing/marketing-shell';
 import { Eyebrow, SectionLead, SectionTitle } from '@/components/marketing/sections/_shared';
 
 export const metadata: Metadata = {
@@ -56,7 +55,7 @@ const SECTIONS: { eyebrow: string; title: string; body: string }[] = [
 
 export default function PrivacyPage() {
   return (
-    <MarketingShell>
+    <>
       <section className="relative overflow-hidden bg-white">
         <div
           aria-hidden
@@ -165,6 +164,6 @@ export default function PrivacyPage() {
           </div>
         </div>
       </section>
-    </MarketingShell>
+    </>
   );
 }
