@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 
-const MAX_AGE_MS = 10 * 60 * 1000; // 10 minutes
+const DEFAULT_MAX_AGE_MS = 10 * 60 * 1000; // 10 minutes — suitable for OAuth redirect flows.
 
 export interface InstallStatePayload {
   orgId: string;
@@ -10,6 +10,13 @@ export interface InstallStatePayload {
 
 interface SignedPayload extends InstallStatePayload {
   iat: number;
+  /** Optional absolute expiration (epoch ms). When set, overrides the default TTL. */
+  exp?: number;
+}
+
+export interface SignOptions {
+  /** Override the default 10-minute TTL. Writes an absolute `exp` into the signed payload. */
+  ttlMs?: number;
 }
 
 function getSecret(): string {
@@ -33,8 +40,13 @@ function base64urlDecode(input: string): Buffer {
   return Buffer.from(b64, 'base64');
 }
 
-export function signInstallState(payload: InstallStatePayload): string {
-  const body: SignedPayload = { ...payload, iat: Date.now() };
+export function signInstallState(
+  payload: InstallStatePayload,
+  opts: SignOptions = {},
+): string {
+  const iat = Date.now();
+  const body: SignedPayload = { ...payload, iat };
+  if (typeof opts.ttlMs === 'number') body.exp = iat + opts.ttlMs;
   const bodyB64 = base64url(JSON.stringify(body));
   const sig = createHmac('sha256', getSecret()).update(bodyB64).digest();
   return `${bodyB64}.${base64url(sig)}`;
@@ -60,9 +72,14 @@ export function verifyInstallState(token: string):
   } catch {
     return { ok: false, reason: 'invalid payload' };
   }
-  if (Date.now() - parsed.iat > MAX_AGE_MS) {
+  const now = Date.now();
+  const expired =
+    typeof parsed.exp === 'number'
+      ? now > parsed.exp
+      : now - parsed.iat > DEFAULT_MAX_AGE_MS;
+  if (expired) {
     return { ok: false, reason: 'expired' };
   }
-  const { iat, ...rest } = parsed;
+  const { iat: _iat, exp: _exp, ...rest } = parsed;
   return { ok: true, value: rest };
 }

@@ -63,6 +63,7 @@ async function runOnce(): Promise<{ posted: number; skipped: number }> {
       skillRef: installs.skillRef,
       requesterId: approvals.requestedBy,
       createdAt: approvals.createdAt,
+      expiresAt: approvals.expiresAt,
     })
     .from(approvals)
     .innerJoin(installs, eq(installs.id, approvals.installId))
@@ -125,11 +126,25 @@ async function runOnce(): Promise<{ posted: number; skipped: number }> {
     const orgSlug = orgSlugById.get(p.orgId) ?? p.orgId;
     const webUrl =
       process.env.CAVALRY_WEB_URL ?? 'http://localhost:3000';
-    const stateToken = signInstallStateForOrg({
-      orgId: p.orgId,
-      userId: p.requesterId ?? 'slack',
-      nonce: `slack-${p.approvalId}`,
-    });
+    // The state token must outlive the 10-minute OAuth default so admins can
+    // act on the Slack message any time before the approval itself expires.
+    // We tie the token's lifetime to the approval's expiresAt; if the approval
+    // is already past expiry, skip — the retry path will create a fresh one.
+    const ttlMs = p.expiresAt
+      ? p.expiresAt.getTime() - Date.now()
+      : 24 * 60 * 60 * 1000;
+    if (ttlMs <= 0) {
+      skipped += 1;
+      continue;
+    }
+    const stateToken = signInstallStateForOrg(
+      {
+        orgId: p.orgId,
+        userId: p.requesterId ?? 'slack',
+        nonce: `slack-${p.approvalId}`,
+      },
+      { ttlMs },
+    );
 
     const blocks = approvalRequestBlocks({
       approvalId: p.approvalId,

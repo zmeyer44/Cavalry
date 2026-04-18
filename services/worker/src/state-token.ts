@@ -17,6 +17,18 @@ export interface InstallStatePayload {
 
 interface Signed extends InstallStatePayload {
   iat: number;
+  /** Optional absolute expiration (epoch ms); honored by the web verifier. */
+  exp?: number;
+}
+
+export interface SignOptions {
+  /**
+   * Override the default 10-minute TTL. Written as an absolute `exp` into
+   * the signed payload. Use this for long-lived tokens such as the ones
+   * embedded in Slack approval buttons, which must remain valid for the
+   * full approval window (typically 24h).
+   */
+  ttlMs?: number;
 }
 
 function getSecret(): string {
@@ -36,8 +48,13 @@ function b64url(buf: Buffer | string): string {
     .replace(/=+$/, '');
 }
 
-export function signInstallStateForOrg(payload: InstallStatePayload): string {
-  const body: Signed = { ...payload, iat: Date.now() };
+export function signInstallStateForOrg(
+  payload: InstallStatePayload,
+  opts: SignOptions = {},
+): string {
+  const iat = Date.now();
+  const body: Signed = { ...payload, iat };
+  if (typeof opts.ttlMs === 'number') body.exp = iat + opts.ttlMs;
   const bodyB64 = b64url(JSON.stringify(body));
   const sig = createHmac('sha256', getSecret()).update(bodyB64).digest();
   return `${bodyB64}.${b64url(sig)}`;
