@@ -62,10 +62,8 @@ export default function Home() {
       <h2>License</h2>
       <p>
         Cavalry is licensed under the{' '}
-        <a href="https://mariadb.com/bsl11/">Business Source License 1.1</a>, which
-        permits self-hosting and production use but prohibits running a hosted
-        competitive service. The license converts to Apache 2.0 three years after each
-        release.
+        <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache License 2.0</a>.
+        Self-host freely, including for commercial use.
       </p>
     </article>
   );

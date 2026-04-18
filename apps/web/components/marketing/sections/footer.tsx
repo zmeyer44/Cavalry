@@ -70,7 +70,7 @@ export function Footer() {
         </div>
         <div className="h-px bg-stone-100" />
         <div className="flex flex-col justify-between gap-3 py-6 font-mono text-[11px] uppercase tracking-[0.14em] text-stone-500 md:flex-row">
-          <span>© 2026 Cavalry · BSL 1.1 → Apache 2.0 (2029)</span>
+          <span>© 2026 Cavalry · Apache 2.0</span>
           <span>cavalry.sh</span>
         </div>
       </div>

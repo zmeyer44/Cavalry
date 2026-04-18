@@ -10,7 +10,7 @@ Cavalry is a self-hostable control plane for the skills, tiles, rules, and MCP s
 - **A complete audit trail** with SIEM webhook delivery (Splunk HEC, Datadog logs, generic) and Slack approval notifications.
 - **An MCP endpoint** so agents like Claude Code and Cursor discover only the skills your policies permit.
 
-Licensed under [BSL 1.1](https://mariadb.com/bsl11/). Self-host freely; conversion to Apache 2.0 three years after each release.
+Licensed under [Apache 2.0](LICENSE). Self-host freely, including for commercial use.
 
 ## Quickstart
 
@@ -150,4 +150,4 @@ Container images ship to `ghcr.io/cavalry-sh/{web,gateway,worker}:<version>` on 
 
 ## License
 
-Business Source License 1.1. See [`LICENSE`](LICENSE) for terms. TL;DR: self-host freely, including for commercial use inside your company; you may not run a hosted service that competes with Cavalry. Converts to Apache 2.0 three years after each release.
+Apache License 2.0. See [`LICENSE`](LICENSE) for terms.
