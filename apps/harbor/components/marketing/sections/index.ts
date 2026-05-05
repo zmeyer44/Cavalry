@@ -1,0 +1,11 @@
+export { TrustBar } from './trust-bar';
+export { Stats } from './stats';
+export { Problem } from './problem';
+export { HowItWorks } from './how-it-works';
+export { Features } from './features';
+export { Personas } from './personas';
+export { Comparison } from './comparison';
+export { SelfHost } from './self-host';
+export { Integrations } from './integrations';
+export { CTA } from './cta';
+export { Footer } from './footer';
